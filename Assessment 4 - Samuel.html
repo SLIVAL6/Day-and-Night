@@ -83,15 +83,20 @@
     var subFrames = 10;
     var currFrame = 0;
 
+    
     // Creates Scene
+    var point;
     function CreateScene() {
       // Adds a Sun and Moon to the scene
-      scene.add(CreateSun());
-      scene.add(CreateMoon());
+      point = new THREE.Group();
+      point.add(CreateSun());
+      point.add(CreateMoon());
+      scene.add(point);
     }
 
     CreateScene();
 
+    var sun;
     function CreateSun() {
       // Material for the Sun
       var material_sun = new THREE.MeshBasicMaterial();
@@ -102,10 +107,10 @@
       var geometry_sun = new THREE.SphereGeometry(2, 15, 15);
         
       // Generates Sun with material and geometry
-      var sun = new THREE.Mesh(geometry_sun, material_sun);
+      sun = new THREE.Mesh(geometry_sun, material_sun);
 
       // Sets position for the Sun
-      sun.position.x = -3;
+      sun.position.x = -10;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -118,6 +123,7 @@
       return sun;
     }
 
+    var moon;
     function CreateMoon() {
       // Material for the Moon
       var material_moon = new THREE.MeshBasicMaterial();
@@ -131,7 +137,7 @@
       var moon = new THREE.Mesh(geometry_moon, material_moon);
 
       // Sets position for the Moon
-      moon.position.x = 3;
+      moon.position.x = 10;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -150,6 +156,8 @@
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
+
+      point.rotateOnAxis(new THREE.Vector3(0, 0, 1), -0.01);
 
       requestAnimationFrame(MyUpdateLoop);
     };
