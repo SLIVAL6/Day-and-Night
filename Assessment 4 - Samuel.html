@@ -88,10 +88,13 @@
     var point;
     function CreateScene() {
       // Adds a Sun and Moon to the scene
+      // point is used as an empty parent for the Sun and Moon
       point = new THREE.Group();
       point.add(CreateSun());
       point.add(CreateMoon());
       scene.add(point);
+
+      scene.add(CreatePlane());
     }
 
     CreateScene();
@@ -110,7 +113,7 @@
       sun = new THREE.Mesh(geometry_sun, material_sun);
 
       // Sets position for the Sun
-      sun.position.x = -10;
+      sun.position.x = -20;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -134,10 +137,10 @@
       var geometry_moon = new THREE.SphereGeometry(2, 15, 15);
         
       // Generates Moon with material and geometry
-      var moon = new THREE.Mesh(geometry_moon, material_moon);
+      moon = new THREE.Mesh(geometry_moon, material_moon);
 
       // Sets position for the Moon
-      moon.position.x = 10;
+      moon.position.x = 20;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -150,6 +153,32 @@
       return moon;
     }
 
+    var plane;
+    function CreatePlane() {
+      // Material for the plane
+      var material_plane = new THREE.MeshBasicMaterial();
+      material_plane.color.setHSL(0, 0, 0.8);
+      material_plane.wireframe = true;
+
+      // Plane geometry
+      var geometry_plane = new THREE.PlaneGeometry(50, 50, 50, 50);
+
+      // Generates plane
+      plane = new THREE.Mesh(geometry_plane, material_plane);
+
+      // Sets position for the plane
+      plane.position.x = 0;
+      plane.position.y = 0;
+      plane.position.z = 0;
+
+      // Sets rotation for the plane
+      plane.rotation.x = Math.PI / 2;
+      plane.rotation.y = 0;
+      plane.rotation.z = 0;
+
+      return plane;
+    }
+
     var controls = new OrbitControls(camera, renderer.domElement);
 
     // Final update loop
@@ -157,6 +186,7 @@
       renderer.render(scene, camera);
       controls.update();
 
+      // Rotates the Sun and Moon around the point (0, 0, 0)
       point.rotateOnAxis(new THREE.Vector3(0, 0, 1), -0.01);
 
       requestAnimationFrame(MyUpdateLoop);
