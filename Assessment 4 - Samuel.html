@@ -85,9 +85,64 @@
 
     // Creates Scene
     function CreateScene() {
+      // Adds a Sun and Moon to the scene
+      scene.add(CreateSun());
+      scene.add(CreateMoon());
     }
 
     CreateScene();
+
+    function CreateSun() {
+      // Material for the Sun
+      var material_sun = new THREE.MeshBasicMaterial();
+      material_sun.color.setHSL(0.152, 0.95, 0.57);
+      material_sun.wireframe = true;
+
+      // Sphere geometry for the Sun
+      var geometry_sun = new THREE.SphereGeometry(2, 15, 15);
+        
+      // Generates Sun with material and geometry
+      var sun = new THREE.Mesh(geometry_sun, material_sun);
+
+      // Sets position for the Sun
+      sun.position.x = -3;
+      sun.position.y = 0;
+      sun.position.z = 0;
+
+      // Sets rotation for the Sun
+      sun.rotation.x = 0;
+      sun.rotation.y = 0;
+      sun.rotation.z = 0;
+
+      // Returns the Sun object
+      return sun;
+    }
+
+    function CreateMoon() {
+      // Material for the Moon
+      var material_moon = new THREE.MeshBasicMaterial();
+      material_moon.color.setHSL(0, 0, 0.8);
+      material_moon.wireframe = true;
+
+      // Sphere geometry for the Moon
+      var geometry_moon = new THREE.SphereGeometry(2, 15, 15);
+        
+      // Generates Moon with material and geometry
+      var moon = new THREE.Mesh(geometry_moon, material_moon);
+
+      // Sets position for the Moon
+      moon.position.x = 3;
+      moon.position.y = 0;
+      moon.position.z = 0;
+
+      // Sets rotation for the Moon
+      moon.rotation.x = 0;
+      moon.rotation.y = 0;
+      moon.rotation.z = 0;
+
+      // Returns the Moon object
+      return moon;
+    }
 
     var controls = new OrbitControls(camera, renderer.domElement);
 
