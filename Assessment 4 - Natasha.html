@@ -83,6 +83,18 @@
     var subFrames = 10;
     var currFrame = 0;
 
+    //plane
+    var planeGeometry = new THREE.PlaneGeometry(10,10,200,200);
+    planeGeometry.rotateX(-Math.PI * 0.4);
+    var planeMaterial = new THREE.MeshBasicMaterial();
+    planeMaterial.wireframe = true;
+    var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+    scene.add(plane);
+
+    
+terrain.geometry.attributes.position.needsUpdate = true;
+terrain.geometry.computeVertexNormals();
+
     // Creates Scene
     function CreateScene() {
     }
