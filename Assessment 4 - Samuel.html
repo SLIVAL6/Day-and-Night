@@ -93,6 +93,7 @@
       point.add(CreateSun());
       point.add(CreateMoon());
       scene.add(point);
+      point.rotation.z = Math.PI;
 
       scene.add(CreatePlane());
     }
@@ -179,15 +180,49 @@
       return plane;
     }
 
+    const maxTime = 1440; // Amount of minutes in a day (24 hrs * 60 mins)
+    var time = 1440; // Value between 0 and 1440 in minutes
+    var currentTime; // Value between 0 and 1 to represent current time of day
+    var timePaused = false; // Pauses time
+    var minutes = 1; // Rate at which time passes; set to negative to reverse time
+    function ProcessTime() {
+      // Adds minutes to time each update frame
+      if(!timePaused)
+      {
+        time += minutes;
+      }
+      
+      // Resets time to 0 when it exceeds 1440
+      if(time >= maxTime)
+      {
+        time = 0;
+      }
+
+      // Sets current time
+      currentTime = time / maxTime;
+    }
+
+    // Directly sets the value of time
+    function SetTime(newTime) {
+      time = newTime;
+    }
+
+    // Rotation of the Sun and Moon
+    function SunMoonRotation() {
+      point.rotation.z = Math.PI * 2 * currentTime;
+    }
+
+    // Controls
     var controls = new OrbitControls(camera, renderer.domElement);
 
-    // Final update loop
+    // Update loop
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
 
       // Rotates the Sun and Moon around the point (0, 0, 0)
-      point.rotateOnAxis(new THREE.Vector3(0, 0, 1), -0.01);
+      ProcessTime();
+      SunMoonRotation();
 
       requestAnimationFrame(MyUpdateLoop);
     };
