@@ -55,6 +55,8 @@
     import * as THREE from 'three';
     import { OrbitControls } from './build/OrbitControls.js';
     import { Perlin } from './build/perlin.js';
+    import { OBJLoader } from './build/loaders/OBJLoader.js';
+    import { MTLLoader } from './build/loaders/MTLLoader.js';
 
     // Create scene
     var scene = new THREE.Scene();
@@ -66,6 +68,13 @@
     camera.position.y = 70;
     camera.position.z = 1000;
     //camera.rotation.y = Math.PI / 2999;
+
+
+    var cameralight = new THREE.PointLight( new THREE.Color(1,1,1), 1 );
+ 	  cameralight.name = 'Light';
+    camera.add( cameralight );
+ 	  scene.add(camera);
+    scene.background = new THREE.Color(0,0,0);
 
     // Renderer setup
     var renderer = new THREE.WebGLRenderer();
@@ -86,27 +95,35 @@
     var subFrames = 10;
     var currFrame = 0;
 
-    //plane
-    var planeGeometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
-    //planeGeometry.rotateX(Math.PI / 2);
-    var planeMaterial = new THREE.MeshBasicMaterial();
-    planeMaterial.wireframe = true;
-    var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
-    scene.add(terrain);
+    function CreateTerrain() {
+      //plane
+      var planeGeometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
+      //planeGeometry.rotateX(Math.PI / 2);
+      var planeMaterial = new THREE.MeshBasicMaterial();
+      planeMaterial.wireframe = true;
+      planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
+      var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
+      scene.add(terrain);
+      
+      var perlin = new Perlin();
+      var peak = 60;
+      var smoothing = 1000;
+      var max = 0;
+      var vertices = terrain.geometry.attributes.position.array;
+      for (var i = 0; i <= vertices.length; i += 3) {
+          vertices[i+2] = peak * perlin.noise(
+              vertices[i]/smoothing, 
+              vertices[i+1]/smoothing
+          );
+          if (vertices[i+2] > max){
+                max = vertices[i+2];}
+      }
 
-    var perlin = new Perlin();
-    var peak = 60;
-    var smoothing = 1000;
-    var max = 0;
-    var vertices = terrain.geometry.attributes.position.array;
-    for (var i = 0; i <= vertices.length; i += 3) {
-        vertices[i+2] = peak * perlin.noise(
-            vertices[i]/smoothing, 
-            vertices[i+1]/smoothing
-        );
-        if (vertices[i+2] > max){
-              max = vertices[i+2];}
+      terrain.geometry.attributes.position.needsUpdate = true;
+      terrain.geometry.computeVertexNormals();
+      terrain.geometry.rotateX(Math.PI/2);
     }
+    
 
     /*
     var perlin2 = new Perlin();
@@ -122,22 +139,53 @@
               max = vertices[i+2];}
     }*/
 
+    function LoadLamp() {
+      var mtlloader=new MTLLoader();
+      mtlloader.setPath( '../models/' )
+      mtlloader.load( 'streetLamp.mtl', function ( materials ) 
+      {
+        materials.preload();
+        var objload=new OBJLoader();
+        objload.setMaterials( materials )
+        objload.setPath( '../models/' )
+        objload.load( 'streetLamp.obj', function ( object ) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject (object);
+          var CenterBB= new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+          for ( var i = 0, l = object.children.length; i < l; i ++ ) 
+          {
+            object.children[i].material.color= new THREE.Color(1,1,1);
+          }
+          object.scale.set(100,100,100)
+          scene.add(object);
+        });
+      } );
+    }
 
 
-    terrain.geometry.attributes.position.needsUpdate = true;
-    terrain.geometry.computeVertexNormals();
-    terrain.geometry.rotateX(Math.PI/2);
 
-    var cubeGeo = new THREE.BoxGeometry(10,10);
-    var cubeMat = new THREE.MeshBasicMaterial();
-    var cube = new THREE.Mesh(cubeGeo, cubeMat);
-    cube.position.y = max;
-    console.log(max);
-    //scene.add(cube);
+
+
+    
+
+    function cube() {
+      var cubeGeo = new THREE.BoxGeometry(10,10);
+      var cubeMat = new THREE.MeshBasicMaterial();
+      var cube = new THREE.Mesh(cubeGeo, cubeMat);
+      cube.position.y = max;
+      console.log(max);
+      scene.add(cube);
+    }
+    
 
     // Creates Scene
     function CreateScene() {
-      //refreshVertices();
+      CreateTerrain();
+      LoadLamp();
     }
 
     CreateScene();
