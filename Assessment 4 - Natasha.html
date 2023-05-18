@@ -87,7 +87,7 @@
     var currFrame = 0;
 
     //plane
-    var planeGeometry = new THREE.PlaneGeometry(2000, 2000, 256, 256);
+    var planeGeometry = new THREE.PlaneGeometry(5000, 5000, 256, 256);
     //planeGeometry.rotateX(Math.PI / 2);
     var planeMaterial = new THREE.MeshBasicMaterial();
     planeMaterial.wireframe = true;
@@ -96,7 +96,7 @@
 
     var perlin = new Perlin();
     var peak = 60;
-    var smoothing = 700;
+    var smoothing = 1000;
     var max = 0;
     var vertices = terrain.geometry.attributes.position.array;
     for (var i = 0; i <= vertices.length; i += 3) {
