@@ -166,8 +166,10 @@
       } );
     }
 
+    var trees = [];
+
     
-    var treeModel1;
+    var treeModel;
 		var treeMaterial1;
 		var bodyMaterial;
 		var mtlload = new MTLLoader();
@@ -188,15 +190,16 @@
 				box3.getSize(SizeBB);
 
 				// Change colour
+        /*
 				bodyMaterial = materials.materials.Body;
 				var red = Math.random();
 				var green = Math.random();
 				var blue = Math.random();
-				changeColor(bodyMaterial, new THREE.Color(red, green, blue));
+				changeColor(bodyMaterial, new THREE.Color(red, green, blue));*/
 
 				for(var i = 0, l = object.children.length; i < l; i ++) 
 				{
-					object.children[i].material.color = new THREE.Color(red, green, blue);
+					object.children[i].material.color = new THREE.Color(1,1,1);
 			 	}
 
 				object.castShadow = true;
@@ -212,10 +215,30 @@
 				combined.multiply(tra);
 			
 		    object.applyMatrix4(combined);
-				treeModel1 = object;
+				treeModel = object;
         console.log("ya");
 			});
 		});
+
+    // Changes material colour
+    /*
+		function changeColor(material, newColor)
+		{
+			material.color = newColor;
+			material.needsUpdate = true;
+		}*/
+
+    function spawnTree() 
+		{
+		  	//var spawnIndex = Math.floor(Math.random() * spawnPositions.length);
+		  	//var spawnPosition = spawnPositions[spawnIndex];
+    		var tree = treeModel.clone();
+        tree.position.set(10,10,10);
+    		//tree.position.copy(spawnPosition);
+    		//tree.direction = spawnDirection;
+    		trees.push(tree);
+    		scene.add(tree);
+		}
 
 
 
@@ -237,6 +260,7 @@
     function CreateScene() {
       CreateTerrain();
       LoadLamp();
+      spawnTree();
     }
 
     CreateScene();
