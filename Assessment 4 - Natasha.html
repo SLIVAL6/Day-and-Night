@@ -166,6 +166,57 @@
       } );
     }
 
+    
+    var treeModel1;
+		var treeMaterial1;
+		var bodyMaterial;
+		var mtlload = new MTLLoader();
+		mtlload.setPath('../models/')
+		mtlload.load('Gledista_Triacanthos_2.mtl', function(materials) 
+		{
+			materials.preload();
+			var objload = new OBJLoader();
+			objload.setMaterials(materials)
+			objload.setPath('../models/')
+			objload.load('Gledista_Triacanthos_2.obj', function(object) 
+			{
+				var box3 = new THREE.Box3();
+				box3.setFromObject(object);
+				var CenterBB = new THREE.Vector3();
+				var SizeBB = new THREE.Vector3();
+				box3.getCenter(CenterBB);
+				box3.getSize(SizeBB);
+
+				// Change colour
+				bodyMaterial = materials.materials.Body;
+				var red = Math.random();
+				var green = Math.random();
+				var blue = Math.random();
+				changeColor(bodyMaterial, new THREE.Color(red, green, blue));
+
+				for(var i = 0, l = object.children.length; i < l; i ++) 
+				{
+					object.children[i].material.color = new THREE.Color(red, green, blue);
+			 	}
+
+				object.castShadow = true;
+				object.receiveShadow = true;
+
+				var sca = new THREE.Matrix4();
+				var tra = new THREE.Matrix4();
+				var combined = new THREE.Matrix4();
+			
+				sca.makeScale(5 / SizeBB.length(), 5 / SizeBB.length(), 5 / SizeBB.length());
+				tra.makeTranslation(-CenterBB.x, -CenterBB.y, -CenterBB.z);
+				combined.multiply(sca);
+				combined.multiply(tra);
+			
+		    object.applyMatrix4(combined);
+				treeModel1 = object;
+        console.log("ya");
+			});
+		});
+
 
 
 
