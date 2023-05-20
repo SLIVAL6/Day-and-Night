@@ -55,10 +55,22 @@
     import * as THREE from 'three';
     import { OrbitControls } from './build/OrbitControls.js';
     import { GUI } from './build/lil-gui.module.min.js';
+    import { EffectComposer } from './build/EffectComposer.js';
+    import { RenderPass } from './build/RenderPass.js';
+    import { ShaderPass } from './build/ShaderPass.js';
+    import { UnrealBloomPass } from './build/UnrealBloomPass.js';
 
     // Create scene
     var scene = new THREE.Scene();
     var ratio = window.innerWidth / window.innerHeight;
+
+    // Creates layer for bloom
+    const bloomLayer = new THREE.Layers();
+    bloomLayer.set(1);
+    var exposure = 1;
+    var bloomStrength = 5;
+    var bloomThreshold = 0;
+    var bloomRadius = 0;
 
     // Camera setup
     var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
@@ -69,6 +81,35 @@
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    const renderScene = new RenderPass (scene, camera);
+
+    const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+		bloomPass.threshold = bloomThreshold;
+		bloomPass.strength = bloomStrength;
+		bloomPass.radius = bloomRadius;
+
+    const bloomComposer = new EffectComposer( renderer );
+		bloomComposer.renderToScreen = false;
+		bloomComposer.addPass( renderScene );
+		bloomComposer.addPass( bloomPass );
+
+    const finalPass = new ShaderPass(
+		  new THREE.ShaderMaterial( {
+			  uniforms: {
+				  baseTexture: { value: null },
+				  bloomTexture: { value: bloomComposer.renderTarget2.texture }
+				},
+				vertexShader: document.getElementById( 'vertexshader' ),
+				fragmentShader: document.getElementById( 'fragmentshader' ),
+				defines: {}
+			} ), 'baseTexture'
+		);
+		finalPass.needsSwap = true;
+
+		const finalComposer = new EffectComposer(renderer);
+		finalComposer.addPass(renderScene);
+		finalComposer.addPass(finalPass);
 
     // Clears the scene when parameters are updated
     function ClearScene() {
@@ -84,7 +125,6 @@
     var subFrames = 10;
     var currFrame = 0;
 
-    
     // Creates Scene
     var point;
     function CreateScene() {
@@ -106,7 +146,7 @@
       // Material for the Sun
       var material_sun = new THREE.MeshBasicMaterial();
       material_sun.color.setHSL(0.152, 0.95, 0.57);
-      material_sun.wireframe = true;
+      material_sun.wireframe = false;
 
       // Sphere geometry for the Sun
       var geometry_sun = new THREE.SphereGeometry(2, 15, 15);
@@ -115,7 +155,7 @@
       sun = new THREE.Mesh(geometry_sun, material_sun);
 
       // Sets position for the Sun
-      sun.position.x = -20;
+      sun.position.x = 20;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -133,7 +173,7 @@
       // Material for the Moon
       var material_moon = new THREE.MeshBasicMaterial();
       material_moon.color.setHSL(0, 0, 0.8);
-      material_moon.wireframe = true;
+      material_moon.wireframe = false;
 
       // Sphere geometry for the Moon
       var geometry_moon = new THREE.SphereGeometry(2, 15, 15);
@@ -142,7 +182,7 @@
       moon = new THREE.Mesh(geometry_moon, material_moon);
 
       // Sets position for the Moon
-      moon.position.x = 20;
+      moon.position.x = -20;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -160,7 +200,7 @@
       // Material for the plane
       var material_plane = new THREE.MeshBasicMaterial();
       material_plane.color.setHSL(0, 0, 0.8);
-      material_plane.wireframe = true;
+      material_plane.wireframe = false;
 
       // Plane geometry
       var geometry_plane = new THREE.PlaneGeometry(50, 50, 50, 50);
@@ -174,7 +214,7 @@
       plane.position.z = 0;
 
       // Sets rotation for the plane
-      plane.rotation.x = Math.PI / 2;
+      plane.rotation.x = - Math.PI / 2;
       plane.rotation.y = 0;
       plane.rotation.z = 0;
 
@@ -218,37 +258,86 @@
 
     // GUI
     const gui = new GUI(),
+
+      // Parameters for time
       folderTime = gui.addFolder('Time'),
       timeParams = {
+        // Pause time
         get 'Paused'() {
           return timePaused;
         },
         set 'Paused'(v) {
           timePaused = v;
         },
+
+        // Set current time (in minutes)
         get 'Time'() {
           return time;
         },
         set 'Time'(v) {
           time = v;
         },
+
+        // Change speed of time
         get 'Speed'() {
           return minutes;
         },
         set 'Speed'(v) {
           minutes = v;
         }
+      },
+
+      // Parameters for bloom
+      folderBloom = gui.addFolder('Bloom'),
+      bloomParams = {
+        // Exposure
+        get 'Exposure'() {
+          return exposure;
+        },
+        set 'Exposure'(v) {
+          exposure = v;
+        },
+
+        // Bloom strength
+        get 'Bloom Strength'() {
+          return bloomStrength;
+        },
+        set 'Bloom Strength'(v) {
+          bloomStrength = v;
+        },
+
+        // Bloom threshold
+        get 'Bloom Threshold'() {
+          return bloomThreshold;
+        },
+        set 'Bloom Threshold'(v) {
+          bloomThreshold = v;
+        },
+
+        // Bloom radius
+        get 'Bloom Radius'() {
+          return bloomRadius;
+        },
+        set 'Bloom Radius'(v) {
+          bloomRadius = v;
+        }
       };
+      
     folderTime.add(timeParams, 'Paused');
     folderTime.add(timeParams, 'Time', 0, 1440).listen().onChange();
     folderTime.add(timeParams, 'Speed', 0.1, 15);
+
+    folderBloom.add(bloomParams, 'Exposure', 0.1, 2);
+    folderBloom.add(bloomParams, 'Bloom Strength', 0, 10);
+    folderBloom.add(bloomParams, 'Bloom Threshold', 0, 1);
+    folderBloom.add(bloomParams, 'Bloom Radius', 0, 1);
 
     // Update loop
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
 
-      // Rotates the Sun and Moon around the point (0, 0, 0)
+      // Rotates the Sun and Moon around the point at world position (0, 0, 0)
       ProcessTime();
       SunMoonRotation();
 
