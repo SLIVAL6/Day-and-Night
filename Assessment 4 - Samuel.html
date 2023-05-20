@@ -225,9 +225,23 @@
         },
         set 'Paused'(v) {
           timePaused = v;
+        },
+        get 'Time'() {
+          return time;
+        },
+        set 'Time'(v) {
+          time = v;
+        },
+        get 'Speed'() {
+          return minutes;
+        },
+        set 'Speed'(v) {
+          minutes = v;
         }
       };
     folderTime.add(timeParams, 'Paused');
+    folderTime.add(timeParams, 'Time', 0, 1440).listen().onChange();
+    folderTime.add(timeParams, 'Speed', 0.1, 15);
 
     // Update loop
     var MyUpdateLoop = function () {
