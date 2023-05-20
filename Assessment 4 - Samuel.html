@@ -54,6 +54,7 @@
 
     import * as THREE from 'three';
     import { OrbitControls } from './build/OrbitControls.js';
+    import { GUI } from './build/lil-gui.module.min.js';
 
     // Create scene
     var scene = new THREE.Scene();
@@ -214,6 +215,19 @@
 
     // Controls
     var controls = new OrbitControls(camera, renderer.domElement);
+
+    // GUI
+    const gui = new GUI(),
+      folderTime = gui.addFolder('Time'),
+      timeParams = {
+        get 'Paused'() {
+          return timePaused;
+        },
+        set 'Paused'(v) {
+          timePaused = v;
+        }
+      };
+    folderTime.add(timeParams, 'Paused');
 
     // Update loop
     var MyUpdateLoop = function () {
