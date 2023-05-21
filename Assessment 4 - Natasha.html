@@ -90,17 +90,20 @@
       }
     }
 
-    // Frame information
+    // variables
     var FrameMatrix = [];
     var subFrames = 10;
     var currFrame = 0;
     var vertices = [];
     var positions = [];
     var worldSize = 100;
+    var lampNumber = 2;
+    var treeNumber = 50;
+    var trees = [];
 
     function CreateScene() {
 
-      //Creates the Plane
+      //Creates the terrain Plane
       var planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize, 256, 256);
       var planeMaterial = new THREE.MeshBasicMaterial();
       planeMaterial.wireframe = true;
@@ -108,8 +111,8 @@
       planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
       var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
       scene.add(terrain);
-      
-      //Adds noise to plane
+
+      //Adds noise to terrain
       var perlin = new Perlin();
       var peak = 10;
       var smoothing = 100;
@@ -146,46 +149,34 @@
             object.children[i].material.color= new THREE.Color(1,1,1);
           }
 
-          for (var i = 0; i < treeNumber; i++) {
+          
+          for (var i = 0; i < lampNumber; i++) {
             var clone = object.clone();
             var raycaster = new THREE.Raycaster();
-            var posx = THREE.MathUtils.randFloat(-worldSize/2,worldSize/2);
-            var posz = THREE.MathUtils.randFloat(-worldSize/2,worldSize/2);
+            var posx = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+            var posz = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
             var rayPos = new THREE.Vector3(posx,1000,posz);
             var rayDir = new THREE.Vector3(0, -1, 0);
             var ray = new THREE.Ray(rayPos, rayDir);
             raycaster.ray = ray;
             let intersect = raycaster.intersectObject(terrain);
-
-            //var pos = intersect.point;
-            //console.log(pos);
-            //clone.scale.set(100,100,100);
-            //clone.position.set(intersect.point.x,intersect.point.y,intersect.point.z);
-            //trees.push(object);
-            //scene.add(clone);
-            if (intersect[0].point.y >= 2*peak/3) {
-              
+            if (intersect[0].point.y >= peak/2) {
               var pos = intersect[0].point;
               console.log(pos);
               clone.scale.set(1,1,1);
               clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
               //trees.push(object);
               scene.add(clone);
-              
             }
             else {
               i = i - 1;
-            }
-            
+            } 
           }
         });
       } );
     
 
       //LOAD TREES
-      var trees = [];
-      var treeNumber = 10;
-
       function spawnTrees() {
         var treeModel;
         var treeMaterial1;
@@ -222,9 +213,58 @@
 
             object.castShadow = true;
             object.receiveShadow = true;
+
+            for (var i = 0; i < treeNumber; i++) {
+              var clone = object.clone();
+              var raycaster = new THREE.Raycaster();
+              var posx = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+              var posz = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+              var rayPos = new THREE.Vector3(posx,1000,posz);
+              var rayDir = new THREE.Vector3(0, -1, 0);
+              var ray = new THREE.Ray(rayPos, rayDir);
+              raycaster.ray = ray;
+              let intersect = raycaster.intersectObject(terrain);
+              if (intersect[0].point.y >= peak/2) {
+                var pos = intersect[0].point;
+                console.log(pos);
+                clone.scale.set(0.1,0.1,0.1);
+                clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+                //trees.push(object);
+                scene.add(clone);
+              }
+              else {
+                i = i - 1;
+              } 
+            }
           });
         });
       }
+      spawnTrees();
+
+
+
+      //water plane testing
+      var waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize, 256, 256);
+      var waterMaterial = new THREE.MeshBasicMaterial();
+      //waterMaterial.wireframe = true;
+      waterMaterial.side = THREE.DoubleSide;
+      waterMaterial.color = new THREE.Color(0, 0.761, 1);
+      var water = new THREE.Mesh(waterGeometry,waterMaterial);
+      water.position.set(0,-5,0);
+      scene.add(water);
+
+      var p2 = new Perlin();
+      var peak2 = 0.2;
+      var smoothing2 = 5;
+      var v = [];
+      v = water.geometry.attributes.position.array;
+      for (var i = 0; i <= v.length; i += 3) {
+          v[i+2] = peak2 * p2.noise(
+              v[i]/smoothing2, 
+              v[i+1]/smoothing2
+          );
+      }
+      water.geometry.rotateX(Math.PI/2);
 
     }
 
