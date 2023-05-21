@@ -183,13 +183,13 @@
         var bodyMaterial;
         var mtlload = new MTLLoader();
         mtlload.setPath('../models/')
-        mtlload.load('Gledista_Triacanthos_2.mtl', function(materials) 
+        mtlload.load('NatureFreePack1.mtl', function(materials) 
         {
           materials.preload();
           var objload = new OBJLoader();
           objload.setMaterials(materials)
           objload.setPath('../models/')
-          objload.load('Gledista_Triacanthos_2.obj', function(object) 
+          objload.load('tree1.obj', function(object) 
           {
             var box3 = new THREE.Box3();
             box3.setFromObject(object);
@@ -216,20 +216,22 @@
 
             for (var i = 0; i < treeNumber; i++) {
               var clone = object.clone();
+              var rot = THREE.MathUtils.randFloat(-1,1);
               var raycaster = new THREE.Raycaster();
-              var posx = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
-              var posz = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+              var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+              var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
               var rayPos = new THREE.Vector3(posx,1000,posz);
               var rayDir = new THREE.Vector3(0, -1, 0);
               var ray = new THREE.Ray(rayPos, rayDir);
               raycaster.ray = ray;
               let intersect = raycaster.intersectObject(terrain);
-              if (intersect[0].point.y >= peak/2) {
+              if (intersect[0].point.y >= 0) {
                 var pos = intersect[0].point;
                 console.log(pos);
-                clone.scale.set(0.1,0.1,0.1);
+                clone.scale.set(0.4,0.4,0.4);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
-                //trees.push(object);
+                clone.rotateY(rot);
+                trees.push(clone);
                 scene.add(clone);
               }
               else {
@@ -253,17 +255,20 @@
       water.position.set(0,-5,0);
       scene.add(water);
 
-      var p2 = new Perlin();
-      var peak2 = 0.2;
-      var smoothing2 = 5;
-      var v = [];
-      v = water.geometry.attributes.position.array;
-      for (var i = 0; i <= v.length; i += 3) {
-          v[i+2] = peak2 * p2.noise(
-              v[i]/smoothing2, 
-              v[i+1]/smoothing2
-          );
+      function waterNoise() {
+        var p2 = new Perlin();
+        var peak2 = 0.2;
+        var smoothing2 = 5;
+        var v = [];
+        v = water.geometry.attributes.position.array;
+        for (var i = 0; i <= v.length; i += 3) {
+            v[i+2] = peak2 * p2.noise(
+                v[i]/smoothing2, 
+                v[i+1]/smoothing2
+            );
+        }
       }
+      
       water.geometry.rotateX(Math.PI/2);
 
     }
