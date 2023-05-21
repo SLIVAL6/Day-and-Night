@@ -99,10 +99,10 @@
     var planeWidth = 5000;
     var planeLength = 5000;
 
-    function CreateTerrain() {
-      //plane
+    function CreateScene() {
+
+      //Creates the Plane
       var planeGeometry = new THREE.PlaneGeometry(planeWidth, planeLength, 256, 256);
-      //planeGeometry.rotateX(Math.PI / 2);
       var planeMaterial = new THREE.MeshBasicMaterial();
       planeMaterial.wireframe = true;
       planeMaterial.side = THREE.DoubleSide;
@@ -110,6 +110,7 @@
       var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
       scene.add(terrain);
       
+      //Adds noise to plane
       var perlin = new Perlin();
       var peak = 60;
       var smoothing = 1000;
@@ -120,47 +121,11 @@
               vertices[i+1]/smoothing
           );
       }
-
       terrain.geometry.attributes.position.needsUpdate = true;
       terrain.geometry.computeVertexNormals();
       terrain.geometry.rotateX(Math.PI/2);
-
-      var raycaster = new THREE.Raycaster();
-      var rayPos = new THREE.Vector3(10,100,10);
-      var rayDir = new THREE.Vector3(0, -1, 0);
-      var ray = new THREE.Ray(rayPos, rayDir);
-      raycaster.ray = ray;
-
-      
-      for (var i = 0; i < planeWidth; i++) {
-        for (var j = 0; j < planeLength; j++) {
-          ray.position = new THREE.Vector3(i,100,j);
-          raycaster.ray = ray;
-          let intersect = raycaster.intersectObject(terrain);
-          positions[j] = intersect[0].point;
-          console.log(positions[j]);
-        }
-        
-      }
-      
-    }
     
-
-    /*
-    var perlin2 = new Perlin();
-    var peak2 = 10;
-    var smoothing2 = 0;
-    //second one
-    for (var i = 0; i <= vertices.length; i += 3) {
-        vertices[i+2] += peak2 * perlin2.noise(
-            vertices[i]/smoothing2, 
-            vertices[i+1]/smoothing2,
-        );
-        if (vertices[i+2] > max){
-              max = vertices[i+2];}
-    }*/
-
-    function LoadLamp() {
+      //LOAD LAMPS
       var mtlloader=new MTLLoader();
       mtlloader.setPath( '../models/' )
       mtlloader.load( 'streetLamp.mtl', function ( materials ) 
@@ -181,57 +146,84 @@
           {
             object.children[i].material.color= new THREE.Color(1,1,1);
           }
-          object.scale.set(10,10,10)
-          scene.add(object);
+
+          for (var i = 0; i < treeNumber; i++) {
+            var clone = object.clone();
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randFloat(-2500,2500);
+            var posz = THREE.MathUtils.randFloat(-2500,2500);
+            var rayPos = new THREE.Vector3(posx,100,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+
+            //var pos = intersect.point;
+            //console.log(pos);
+            //clone.scale.set(100,100,100);
+            //clone.position.set(intersect.point.x,intersect.point.y,intersect.point.z);
+            //trees.push(object);
+            //scene.add(clone);
+            
+            var pos = intersect[0].point;
+            console.log(pos);
+            clone.scale.set(100,100,100);
+            clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+            //trees.push(object);
+            scene.add(clone);
+          }
         });
       } );
-    }
+    
 
-    var trees = [];
+      //LOAD TREES
+      var trees = [];
+      var treeNumber = 10;
 
-    function spawnTrees() {
-      var treeModel;
-      var treeMaterial1;
-      var bodyMaterial;
-      var mtlload = new MTLLoader();
-      mtlload.setPath('../models/')
-      mtlload.load('Gledista_Triacanthos_2.mtl', function(materials) 
-      {
-        materials.preload();
-        var objload = new OBJLoader();
-        objload.setMaterials(materials)
-        objload.setPath('../models/')
-        objload.load('Gledista_Triacanthos_2.obj', function(object) 
+      function spawnTrees() {
+        var treeModel;
+        var treeMaterial1;
+        var bodyMaterial;
+        var mtlload = new MTLLoader();
+        mtlload.setPath('../models/')
+        mtlload.load('Gledista_Triacanthos_2.mtl', function(materials) 
         {
-          var box3 = new THREE.Box3();
-          box3.setFromObject(object);
-          var CenterBB = new THREE.Vector3();
-          var SizeBB = new THREE.Vector3();
-          box3.getCenter(CenterBB);
-          box3.getSize(SizeBB);
-
-          // Change colour
-          /*
-          bodyMaterial = materials.materials.Body;
-          var red = Math.random();
-          var green = Math.random();
-          var blue = Math.random();
-          changeColor(bodyMaterial, new THREE.Color(red, green, blue));*/
-
-          for(var i = 0, l = object.children.length; i < l; i ++) 
+          materials.preload();
+          var objload = new OBJLoader();
+          objload.setMaterials(materials)
+          objload.setPath('../models/')
+          objload.load('Gledista_Triacanthos_2.obj', function(object) 
           {
-            object.children[i].material.color = new THREE.Color(1,1,1);
-          }
+            var box3 = new THREE.Box3();
+            box3.setFromObject(object);
+            var CenterBB = new THREE.Vector3();
+            var SizeBB = new THREE.Vector3();
+            box3.getCenter(CenterBB);
+            box3.getSize(SizeBB);
 
-          object.castShadow = true;
-          object.receiveShadow = true;
-          object.scale.set(1,1,1);
-          object.position.set(100,0,100);
-          //trees.push(object);
-          scene.add(object);
+            // Change colour
+            /*
+            bodyMaterial = materials.materials.Body;
+            var red = Math.random();
+            var green = Math.random();
+            var blue = Math.random();
+            changeColor(bodyMaterial, new THREE.Color(red, green, blue));*/
+
+            for(var i = 0, l = object.children.length; i < l; i ++) 
+            {
+              object.children[i].material.color = new THREE.Color(1,1,1);
+            }
+
+            object.castShadow = true;
+            object.receiveShadow = true;
+          });
         });
-      });
+      }
+
     }
+
+    CreateScene();
+
 
     // Changes material colour
     /*
@@ -241,7 +233,9 @@
 			material.needsUpdate = true;
 		}*/
 
-    function spawnTree() 
+    
+
+    /*function spawnTree() 
 		{
 		  	//var spawnIndex = Math.floor(Math.random() * spawnPositions.length);
 		  	//var spawnPosition = spawnPositions[spawnIndex];
@@ -253,35 +247,17 @@
     		scene.add(tree);
 		}
 
-
-
-
-
-
-    
-
-    
-
     function cube() {
-      var cubeGeo = new THREE.BoxGeometry(10,10);
-      var cubeMat = new THREE.MeshBasicMaterial();
-      var cube = new THREE.Mesh(cubeGeo, cubeMat);
-      cube.position.set(vertices[10]);
-      cube.scale.set(100,100);
-      //console.log(max);
-      scene.add(cube);
-    }
+        var cubeGeo = new THREE.BoxGeometry(10,10);
+        var cubeMat = new THREE.MeshBasicMaterial();
+        var cube = new THREE.Mesh(cubeGeo, cubeMat);
+        cube.position.set(vertices[10]);
+        cube.scale.set(100,100);
+        //console.log(max);
+        scene.add(cube);
+    } */
+
     
-
-    // Creates Scene
-    function CreateScene() {
-      CreateTerrain();
-      cube();
-      //LoadLamp();
-      //spawnTrees();
-    }
-
-    CreateScene();
 
     var controls = new OrbitControls(camera, renderer.domElement);
 
