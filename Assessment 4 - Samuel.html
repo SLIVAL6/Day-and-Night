@@ -101,6 +101,8 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 1;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     // Render Pass
@@ -110,7 +112,7 @@
     const layers = 3;
     const params = {
       exposure: 1,
-      bloomStrength: 5,
+      bloomStrength: 10,
       bloomThreshold: 0,
       bloomRadius: 0
     };
@@ -147,8 +149,18 @@
 		finalComposer.addPass(finalPass);
 
     // Ambient light
-    scene.add(new THREE.AmbientLight(0x404040));
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    ambientLight.intensity = 1;
 
+    // Directional light from the sun
+    const sunLight = new THREE.DirectionalLight( { color: 'white' } );
+    sunLight.intensity = 1
+    sunLight.castShadow = true;
+    sunLight.position.x = 40;
+    sunLight.position.y = 0;
+    sunLight.position.z = 0;
+
+    // Material used for bloom processing
     const darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
 
     // Clears the scene when parameters are updated
@@ -167,6 +179,7 @@
 
     // Creates Scene
     var point;
+    var cube; // testing
     function CreateScene() {
       // Createss objects
       CreateSun();
@@ -176,12 +189,27 @@
       point = new THREE.Group();
       point.add(sun);
       point.add(moon);
+
+      point.add(sunLight);
+
       scene.add(point);
       point.rotation.z = Math.PI;
 
       // Adds a plane
       CreatePlane();
       scene.add(plane);
+
+      // Adds lighting
+      scene.add(ambientLight);
+
+      // Adds cube for light testing
+      cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), darkMaterial);
+      cube.position.x = 0;
+      cube.position.y = 10;
+      cube.position.z = 0;
+      cube.castShadow = true;
+      cube.receiveShadow = true;
+      scene.add(cube);
     }
 
     CreateScene();
@@ -201,7 +229,7 @@
       sun = new THREE.Mesh(sunGeometry, sunMaterial);
 
       // Sets position for the Sun
-      sun.position.x = 20;
+      sun.position.x = 40;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -226,7 +254,7 @@
       moon = new THREE.Mesh(moonGeometry, moonMaterial);
 
       // Sets position for the Moon
-      moon.position.x = -20;
+      moon.position.x = -40;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -249,6 +277,9 @@
 
       // Generates plane
       plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      plane.castShadow = true;
+      plane.receiveShadow = true;
 
       // Sets position for the plane
       plane.position.x = 0;
@@ -335,7 +366,7 @@
           return renderer.toneMappingExposure;
         },
         set 'Exposure'(v) {
-          renderer.toneMappingExposure = Math.pow(v, 4.0);
+          renderer.toneMappingExposure = v;
         },
 
         // Bloom strength
@@ -367,8 +398,8 @@
     folderTime.add(timeParams, 'Time', 0, 1440).listen().onChange();
     folderTime.add(timeParams, 'Speed', 0.1, 15);
 
-    folderBloom.add(bloomParams, 'Exposure', 0.1, 2);
-    folderBloom.add(bloomParams, 'Bloom Strength', 0, 10);
+    folderBloom.add(bloomParams, 'Exposure', 0, 16);
+    folderBloom.add(bloomParams, 'Bloom Strength', 0, 20);
     folderBloom.add(bloomParams, 'Bloom Threshold', 0, 1);
     folderBloom.add(bloomParams, 'Bloom Radius', 0, 1);
 
@@ -382,10 +413,12 @@
 
       // Processes bloom
       plane.material = darkMaterial;
+      cube.material = darkMaterial; // testing
       bloomComposer.render();
       plane.material = planeMaterial;
       sun.material = sunMaterial;
       moon.material = moonMaterial;
+      cube.material = planeMaterial; // testing
       finalComposer.render();
 
       requestAnimationFrame(MyUpdateLoop);
