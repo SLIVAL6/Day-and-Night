@@ -59,6 +59,16 @@
     var scene = new THREE.Scene();
     var ratio = window.innerWidth / window.innerHeight;
 
+    // Camera setup
+    var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+    camera.position.set(0, 0, 15);
+    camera.lookAt(0, 0, 1);
+
+    // Renderer setup
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
     // Random Location Generator
     function randomLocation(){
       var num = Math.floor(Math.random() * 10) + 1;
@@ -81,15 +91,20 @@
       scene.add(stars[i]);
     }
 
-    // Camera setup
-    var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-    camera.position.set(0, 0, 15);
-    camera.lookAt(0, 0, 1);
+    var star_lightness = 0;
 
-    // Renderer setup
-    var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    function animate(){
+      for(let i = 0; i < stars.length; i++){
+        let star = stars[i];
+        star.rotation.x += 0.01;
+        star.rotation.y += 0.01;
+        star_lightness > 100 ? star_lightness = 0 : star_lightness++;
+      }
+      
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
 
     // Clears the scene when parameters are updated
     function ClearScene() {
