@@ -57,6 +57,7 @@
     import { Perlin } from './build/perlin.js';
     import { OBJLoader } from './build/loaders/OBJLoader.js';
     import { MTLLoader } from './build/loaders/MTLLoader.js';
+    import { GUI } from './build/lil-gui.module.min.js';
 
     // Create scene
     var scene = new THREE.Scene();
@@ -95,7 +96,11 @@
     var subFrames = 10;
     var currFrame = 0;
     var vertices = [];
-    var positions = [];
+    var v2 = [];
+    var treePositions = [];
+    var lampPositions = [];
+    var pinePositions = [];
+    var rockPositions = [];
     var worldSize = 100;
     var lampNumber = 2;
     var treeNumber = 50;
@@ -103,19 +108,26 @@
     var trees = [];
     var waterHeight = -5;
     var faces = [];
+    var reload = false;
 
-    function CreateScene() {
 
+
+
+    
+    
+
+    //function CreateScene() {
       //Creates the terrain Plane
       var planeGeometry = new THREE.PlaneGeometry(worldSize, worldSize, 256, 256);
       var planeMaterial = new THREE.MeshBasicMaterial();
+      /*
       planeMaterial.wireframe = true;
       planeMaterial.vertexColors = THREE.VertexColors;
-      planeMaterial.side = THREE.DoubleSide;
-      planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
+      
+      planeMaterial.color = new THREE.Color(0.694, 1, 0.431);*/
 
 
-      /*var planeMaterial = new THREE.ShaderMaterial({
+      var planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
           color1: {
             value: new THREE.Color(1,1,1)
@@ -143,20 +155,17 @@
             gl_FragColor = vec4(mix(color1, color2, vUv.x), 1.0);
           }
         `,
-        //wireframe: true
-      });*/
-      
+        //wireframe: true * modelViewMatrix * vec4(position,1.0);
+        //side: DoubleSide
+      });
 
-      
-
-
-
-
-      
+      planeMaterial.side = THREE.DoubleSide;
+          
       var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
       scene.add(terrain);
 
       //Adds noise to terrain
+      if (reload == false) {
       var perlin = new Perlin();
       var peak = 10;
       var smoothing = 150;
@@ -170,6 +179,14 @@
           );
           //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
       }
+      }
+      else {
+        v2 = terrain.geometry.attributes.position.array;
+        for (var i = 0; i < vertices.length; i++) {
+          v2[i] = vertices[i];
+        }
+        terrain.geometry.rotateX(Math.PI/2);
+      }
       //for (var i = 0; i < terrain.geometry.attributes; i++) {
         //terrain.geometry.attributes.color = new THREE.Color( 1,1,0 );
       //}
@@ -177,7 +194,11 @@
       terrain.geometry.attributes.position.needsUpdate = true;
       terrain.geometry.computeVertexNormals();
       terrain.geometry.rotateX(Math.PI/2);
-    
+
+
+
+
+
       //LOAD LAMPS
       function spawnLamps() {
         var mtlloader=new MTLLoader();
@@ -202,6 +223,7 @@
             }
 
             //SPAWNING IN
+            if (reload == false) {
             for (var i = 0; i < lampNumber; i++) {
               var clone = object.clone();
               var raycaster = new THREE.Raycaster();
@@ -215,14 +237,14 @@
               var pos = intersect[0].point;
               //CHECKING IS POSITION IS TAKEN
               var isIn = false;
-              for (var i = 0; i < positions.length; i++) {
-                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+              for (var i = 0; i < lampPositions.length; i++) {
+                if (lampPositions[i].x == pos.x && lampPositions[i].y == pos.y && lampPositions[i].z == pos.z) {
                   isIn = true;
                 }
               }
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
               if (intersect[0].point.y >= waterHeight+2 && intersect[0].point.y >= peak-6 && isIn == false) {
-                positions.push(pos)
+                lampPositions.push(pos)
                 //console.log(pos);
                 clone.scale.set(1,1,1);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
@@ -233,6 +255,16 @@
               else {
                 i = i - 1;
               } 
+            }
+            }
+            else {
+              for (var i = 0; i < lampPositions.length; i++) {
+                var clone = object.clone();
+                clone.scale.set(1,1,1);
+                clone.position.set(lampPositions[i].x, lampPositions[i].y, lampPositions[i].z);
+                //clone.rotateY(rot);
+                scene.add(clone);
+              }
             }
           });
         } );
@@ -277,6 +309,7 @@
             object.receiveShadow = true;
 
             //SPAWNING IN
+            if (reload == false) {
             for (var i = 0; i < treeNumber; i++) {
               var clone = object.clone();
               var rot = THREE.MathUtils.randFloat(-1,1);
@@ -292,8 +325,8 @@
               //CHECKING IF PLACE IS TAKEN
               var pos = intersect[0].point;
               var isIn = false;
-              for (var i = 0; i < positions.length; i++) {
-                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+              for (var i = 0; i < treePositions.length; i++) {
+                if (treePositions[i].x == pos.x && treePositions[i].y == pos.y && treePositions[i].z == pos.z) {
                   isIn = true;
                 }
               }
@@ -301,7 +334,7 @@
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
               if (intersect[0].point.y >= waterHeight+2 && isIn == false) {
                 
-                positions.push(pos);
+                treePositions.push(pos);
                 //console.log(pos);
                 clone.scale.set(0.4,0.4,0.4);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
@@ -313,6 +346,16 @@
               else {
                 i = i - 1;
               } 
+            }
+            }
+            else {
+              for (var i = 0; i < treePositions.length; i++) {
+                var clone = object.clone();
+                clone.scale.set(0.4,0.4,0.4);
+                clone.position.set(treePositions[i].x, treePositions[i].y, treePositions[i].z);
+                //clone.rotateY(rot);
+                scene.add(clone);
+              }
             }
           });
         });
@@ -357,6 +400,7 @@
             object.receiveShadow = true;
 
             //SPAWNING IN
+            if (reload == false) {
             for (var i = 0; i < pineNumber; i++) {
               var clone = object.clone();
               var rot = THREE.MathUtils.randFloat(-1,1);
@@ -372,8 +416,8 @@
               //CHECKING IF PLACE IS TAKEN
               var pos = intersect[0].point;
               var isIn = false;
-              for (var i = 0; i < positions.length; i++) {
-                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+              for (var i = 0; i < pinePositions.length; i++) {
+                if (pinePositions[i].x == pos.x && pinePositions[i].y == pos.y && pinePositions[i].z == pos.z) {
                   isIn = true;
                 }
               }
@@ -381,7 +425,7 @@
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
               if (intersect[0].point.y >= waterHeight+7 && isIn == false) {
                 
-                positions.push(pos);
+                pinePositions.push(pos);
                 //console.log(pos);
                 clone.scale.set(0.4,0.4,0.4);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
@@ -394,15 +438,27 @@
                 i = i - 1;
               } 
             }
+            }
+            else {
+              for (var i = 0; i < pinePositions.length; i++) {
+                var clone = object.clone();
+                clone.scale.set(0.4,0.4,0.4);
+                clone.position.set(pinePositions[i].x, pinePositions[i].y, pinePositions[i].z);
+                //clone.rotateY(rot);
+                scene.add(clone);
+              }
+            }
           });
         });
       }
-      console.log(positions);
+      
 
       //spawning things called
       spawnLamps();
       spawnTrees();
       //spawnPines();
+
+      
 
 
 
@@ -433,9 +489,48 @@
       
       water.geometry.rotateX(Math.PI/2);
 
-    }
+    //}
 
-    CreateScene();
+    //CreateScene();
+
+    console.log(lampPositions);
+    console.log(treePositions);
+    console.log(pinePositions);
+
+
+
+    //GUI
+    const gui = new GUI(),
+
+    folderWorldGeneration = gui.addFolder('WorldGeneration'),
+      wgParams = {
+        // choose world size
+        get 'World Size'() {
+          return worldSize;
+        },
+        set 'World Size'(v) {
+          worldSize = v;
+        },
+
+        // Set number of normal trees
+        get 'Number of Normal Trees'() {
+          return treeNumber;
+        },
+        set 'Number of Normal Trees'(v) {
+          treeNumber = v;
+        },
+
+        // Set number of lamps
+        get 'Number of Lamps'() {
+          return lampNumber;
+        },
+        set 'Number of Lamps'(v) {
+          lampNumber = v;
+        }
+      };
+    folderWorldGeneration.add(wgParams, 'World Size', 50, 100);
+    folderWorldGeneration.add(wgParams, 'Number of Normal Trees', 0, 100).listen().onChange();
+    folderWorldGeneration.add(wgParams, 'Number of Lamps', 0, 10).listen().onChange();
 
 
     // Changes material colour
@@ -478,7 +573,12 @@
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
-
+      //trees.clear();
+      //reload = true;
+      //spawnTrees();
+      //ClearScene();
+      //reload = true;
+      //CreateScene();
       requestAnimationFrame(MyUpdateLoop);
     };
 
@@ -487,7 +587,7 @@
     function handleKeyDown(event) {
     }
 
-  window.addEventListener('keydown', handleKeyDown, false);
+    window.addEventListener('keydown', handleKeyDown, false);
 
     // Called when the window is resized
     var MyResize = function () {
