@@ -54,10 +54,13 @@
 
     import * as THREE from 'three';
     import { OrbitControls } from './build/OrbitControls.js';
+    import { Sky } from './build/Sky.js';
 
     // Create scene
     var scene = new THREE.Scene();
     var ratio = window.innerWidth / window.innerHeight;
+    //scene.background = new THREE.Color("rgb(0, 0, 0)");
+    //scene.background = new THREE.Color("rgb(135, 206, 250)"); 
 
     // Camera setup
     var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
@@ -71,7 +74,7 @@
 
     // Random Location Generator
     function randomLocation(){
-      var num = Math.floor(Math.random() * 10) + 1;
+      var num = Math.floor(Math.random() * 50) + 1;
       num *= Math.floor(Math.random() * 2) == 1 ? 1 : -1;
       return num;
     }
@@ -79,8 +82,8 @@
     // Star Generation
     var stars = [];
 
-    for(let i = 0; i < 200; i++){
-      let star_geometry = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+    for(let i = 0; i < 1000; i++){
+      let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
       let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
       let star = new THREE.Mesh(star_geometry, star_material);
       star.position.set(randomLocation(), randomLocation(), randomLocation());
@@ -98,7 +101,6 @@
         let star = stars[i];
         star.rotation.x += 0.01;
         star.rotation.y += 0.01;
-        star_lightness > 100 ? star_lightness = 0 : star_lightness++;
       }
       
       requestAnimationFrame(animate);
@@ -126,12 +128,48 @@
 
     CreateScene();
 
+    const maxTime = 1440; // Amount of minutes in a day (24 hrs * 60 mins)
+    var time = 1440; // Value between 0 and 1440 in minutes
+    var currentTime; // Value between 0 and 1 to represent current time of day
+    var timePaused = false; // Pauses time
+    var minutes = 1; // Rate at which time passes; set to negative to reverse time
+    function ProcessTime() {
+      // Adds minutes to time each update frame
+      if(!timePaused)
+      {
+        time += minutes;
+      }
+
+      // Resets time to 0 when it exceeds 1440
+      if(time >= maxTime)
+      {
+        time = 0;
+      }
+
+      // Sets current time
+      currentTime = time / maxTime;
+
+      if(currentTime < 720){
+        scene.background = new THREE.Color("rgb(135, 206, 250)"); 
+      }
+      if(currentTime >= 720){
+        scene.background = new THREE.Color("rgb(0, 0, 0)");
+      }
+    }
+
+    // Directly sets the value of time
+    function SetTime(newTime) {
+      time = newTime;
+    }
+
     var controls = new OrbitControls(camera, renderer.domElement);
 
     // Final update loop
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
+
+      ProcessTime();
 
       requestAnimationFrame(MyUpdateLoop);
     };
