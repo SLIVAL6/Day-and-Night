@@ -91,6 +91,14 @@
       }
     }
 
+    function ClearTrees() {
+      for (let i = scene.children.length - 1; i >= 0; i--) {
+        if (scene.children[i].name == "tree") {
+          scene.remove(scene.children[i]);
+        }
+      }
+    }
+
     // variables
     var FrameMatrix = [];
     var subFrames = 10;
@@ -109,6 +117,7 @@
     var waterHeight = -5;
     var faces = [];
     var reload = false;
+    var def = 50;
 
 
 
@@ -339,6 +348,7 @@
                 clone.scale.set(0.4,0.4,0.4);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
                 clone.rotateY(rot);
+                clone.name = "tree";
                 trees.push(clone);
                 scene.add(clone);
               }
@@ -349,11 +359,21 @@
             }
             }
             else {
-              for (var i = 0; i < treePositions.length; i++) {
+              //ClearTrees();
+              for (var i = 0; i < trees.length; i++) {
+                scene.remove(trees[i]);
+              }
+              console.log(trees);
+              for (var i = 0; i < treeNumber; i++) {
                 var clone = object.clone();
+                clone.name = "tree";
+                
                 clone.scale.set(0.4,0.4,0.4);
                 clone.position.set(treePositions[i].x, treePositions[i].y, treePositions[i].z);
-                //clone.rotateY(rot);
+                var rot = THREE.MathUtils.randFloat(-1,1);
+                
+                clone.rotateY(rot);
+                trees.push(clone);
                 scene.add(clone);
               }
             }
@@ -440,6 +460,7 @@
             }
             }
             else {
+              trees.remove(object);
               for (var i = 0; i < pinePositions.length; i++) {
                 var clone = object.clone();
                 clone.scale.set(0.4,0.4,0.4);
@@ -573,12 +594,12 @@
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
       controls.update();
-      //trees.clear();
-      //reload = true;
-      //spawnTrees();
-      //ClearScene();
-      //reload = true;
-      //CreateScene();
+      if (def != treeNumber) {
+        reload = true;
+        spawnTrees();
+        reload = false;
+        def = treeNumber;
+      }
       requestAnimationFrame(MyUpdateLoop);
     };
 
