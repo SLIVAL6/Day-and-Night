@@ -1,195 +1,164 @@
 <html>
-
-<head>
-  <title>Computer Graphics Assessment 4</title>
-</head>
-
-<style>
-  body {
-    margin: 0;
-  }
-
-  canvas {
-    width: 100%;
-    height: 100%;
-  }
-</style>
-
-<body>
-  <link rel = "shortcut icon" href = "#">
+  <head>
+    <title>Simple Geometry Test</title>
+  </head>
 
   <style>
-    body {
-      font-family: Monospace;
-      background-color: #000;
-      color: #fff;
-      margin: 0px;
-      overflow: hidden;
-    }
-
-    #info {
-      position: absolute;
-      top: 10px;
-      width: 100%;
-      text-align: left;
-    }
+  body {margin: 0;}
+  canvas {width: 100%; height: 100%;}
   </style>
 
-  <div id = "info">
-    <p>
-      Computer Graphics - Assessment 4<br>
-      Perry<br>
-    </p>
-  </div>
+  <body>
+	<link rel="shortcut icon" href="#">
 
-  <script type = "importmap">
+   
+    <style>
+    			body {
+    				font-family: Monospace;
+    				background-color: #000;
+    				color: #fff;
+    				margin: 0px;
+    				overflow: hidden;
+    			}
+    			#info {
+    				position: absolute;
+    				top: 10px;
+    				width: 100%;
+    				text-align: center;
+    			}
+    </style>
+
+    <div id="info">
+      <h2>First Render of Reflection</h2>
+    </div>
+
+		<script type="importmap">
 			{
 				"imports": {
-					"three": "./build/three.module.js"
+					"three": "../build/three.module.js"
 				}
 			}
-	</script>
-
-  <script type = "module">
-    import * as THREE from 'three';
-    import { OrbitControls } from './build/OrbitControls.js';
-    import { MTLLoader } from './build/loaders/MTLLoader.js';
-    import { OBJLoader } from './build/loaders/OBJLoader.js';
-
-		let container;
-
-			let camera, scene, renderer;
-
-			let mouseX = 0, mouseY = 0;
-
-			let windowHalfX = window.innerWidth / 2;
-			let windowHalfY = window.innerHeight / 2;
-
-			let object;
-
-			init();
-			animate();
-
-
-			function init() {
-
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 250;
-
-				// scene
-
-				scene = new THREE.Scene();
-
-				const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
-				scene.add( ambientLight );
-
-				const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
-				camera.add( pointLight );
-				scene.add( camera );
-
-				// manager
-
-				function loadModel() {
-
-					object.traverse( function ( child ) {
-
-						if ( child.isMesh ) child.material.map = texture;
-
-					} );
-
-					object.position.y = - 95;
-					scene.add( object );
-
-				}
-
-				const manager = new THREE.LoadingManager( loadModel );
-
-				// texture
-
-				//const textureLoader = new THREE.TextureLoader( manager );
-				//const texture = textureLoader.load( 'textures/uv_grid_opengl.jpg' );
-				//texture.colorSpace = THREE.SRGBColorSpace;
-
-				// model
-
-				function onProgress( xhr ) {
-
-					if ( xhr.lengthComputable ) {
-
-						const percentComplete = xhr.loaded / xhr.total * 100;
-						console.log( 'model ' + Math.round( percentComplete, 2 ) + '% downloaded' );
-
-					}
-
-				}
-
-				function onError() {}
-
-				const loader = new OBJLoader( manager );
-				loader.load( 'models/obj/male02/male02.obj', function ( obj ) {
-
-					object = obj;
-
-				}, onProgress, onError );
-
-				//
-
-				renderer = new THREE.WebGLRenderer();
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
-
-				document.addEventListener( 'mousemove', onDocumentMouseMove );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize );
-
-			}
-
-			function onWindowResize() {
-
-				windowHalfX = window.innerWidth / 2;
-				windowHalfY = window.innerHeight / 2;
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function onDocumentMouseMove( event ) {
-
-				mouseX = ( event.clientX - windowHalfX ) / 2;
-				mouseY = ( event.clientY - windowHalfY ) / 2;
-
-			}
-
-			//
-
-			function animate() {
-
-				requestAnimationFrame( animate );
-				render();
-
-			}
-
-			function render() {
-
-				camera.position.x += ( mouseX - camera.position.x ) * .05;
-				camera.position.y += ( - mouseY - camera.position.y ) * .05;
-
-				camera.lookAt( scene.position );
-
-				renderer.render( scene, camera );
-
-			}
-
 		</script>
+		
+	<script type="module">
 
-	</body>
+	import * as THREE from 'three';
+	import { Reflector } from './jsm/objects/Reflector.js';
+	import { OrbitControls } from './jsm/controls/OrbitControls.js';
+
+	//create the scene
+	var scene = new THREE.Scene( );
+    var ratio = window.innerWidth/window.innerHeight;
+	
+	//create the perspective camera
+    var camera = new THREE.PerspectiveCamera(45,ratio,0.1,1000);
+
+    //set the camera position
+    camera.position.set(0,0,15);
+    //and the direction
+	camera.lookAt(0,0,1);
+
+
+    //create the webgl renderer
+    var renderer = new THREE.WebGLRenderer( );
+	
+	//create the orbit control function
+	var controls = new OrbitControls( camera, renderer.domElement );
+
+    //set the size of the rendering window
+    renderer.setSize(window.innerWidth,window.innerHeight);
+
+    //add the renderer to the current document
+    document.body.appendChild(renderer.domElement );
+
+ 	//then add lighting
+ 	var cameralight = new THREE.PointLight( new THREE.Color(1,1,1), 0.3 );
+ 	camera.add( cameralight );
+ 	scene.add(camera);
+
+	 //create the floor
+	 var material_floor = new THREE.MeshPhongMaterial();
+     material_floor.shininess=100;
+     material_floor.color=  new THREE.Color(0.8,0.9,0.3);
+	 var geometry_floor = new THREE.BoxGeometry(10,0.2,10);
+     var meshFloor= new THREE.Mesh( geometry_floor, material_floor );
+     meshFloor.position.x-=1;
+	 meshFloor.position.y-=2;
+	 meshFloor.position.z-=5;
+     scene.add( meshFloor );
+	
+	 //create the two coloured walls
+	 var wall1_material = new THREE.MeshPhongMaterial();
+     wall1_material.shininess=100;
+     wall1_material.color=  new THREE.Color(0.8,0.9,0.3);
+	 var geometry_wall1 = new THREE.BoxGeometry(10,0.2,10);
+     var wall1_mesh = new THREE.Mesh( geometry_wall1, wall1_material );
+	 wall1_mesh.position.y+=3;
+	 wall1_mesh.rotateX(55);
+	 scene.add( wall1_mesh );
+
+	 var wall2_material = new THREE.MeshPhongMaterial();
+     wall2_material.shininess=100;
+     wall2_material.color=  new THREE.Color(11,0.9,0.3);
+	 var geometry_floor2 = new THREE.BoxGeometry(10,0.2,10);
+     var wall2_mesh= new THREE.Mesh( geometry_floor2, wall2_material );
+	 wall2_mesh.position.x+=5;
+	 wall2_mesh.position.y+=3;
+	 wall2_mesh.position.z-=6;
+	 wall2_mesh.rotateX(55);
+	 wall2_mesh.rotateZ(55);
+	 scene.add( wall2_mesh );
+
+	 //create the reflective cube
+	 var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+	 var cubeMirror = new Reflector( geometry, 
+	 {
+		clipBias: 0.003,
+		textureWidth: window.innerWidth * window.devicePixelRatio,
+		textureHeight: window.innerHeight * window.devicePixelRatio,
+		color: 0x77776
+	} );
+	
+	cubeMirror.position.y = 0;
+	cubeMirror.position.z = - 5;
+	scene.add( cubeMirror );
+
+	 //final update loop
+	 var MyUpdateLoop = function ( )
+  	{
+		controls.update();
+
+    	//call the render with the scene and the camera
+    	renderer.render(scene,camera);
+
+
+		torusKnot.rotation.x+=0.002;
+		torusKnot.rotation.y+=0.002;
+		torusKnot.rotation.z+=0.002;
+
+    	//finally perform a recoursive call to update again
+    	//this must be called because the mouse change the camera position
+    	requestAnimationFrame(MyUpdateLoop);
+  	};
+
+  	requestAnimationFrame(MyUpdateLoop);
+
+
+	//this fucntion is called when the window is resized
+	var MyResize = function ( )
+  	{
+    	var width = window.innerWidth;
+    	var height = window.innerHeight;
+    	renderer.setSize(width,height);
+    	camera.aspect = width/height;
+    	camera.updateProjectionMatrix();
+    	renderer.render(scene,camera);
+  	};
+
+  	//link the resize of the window to the update of the camera
+  	window.addEventListener( 'resize', MyResize);
+
+	
+    </script>
+  </body>
 </html>
