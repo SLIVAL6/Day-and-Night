@@ -347,25 +347,39 @@
       currentTime = time / maxTime;
     }
 
-    // Directly sets the value of time
-    function SetTime(newTime) {
-      time = newTime;
-    }
-
     // Rotation of the Sun and Moon around world point (0, 0, 0)
     function SunMoonRotation() {
       point.rotation.z = Math.PI * 2 * currentTime;
     }
 
+    const moonMaxRotation = 360; // Rotation for the moon
+    var moonRotation = 360; // Value between 0 and 360
     var moonPhase; // Value between 0 and 1 to rotate the moon
     var moonPaused = false; // Locks moon rotation
+    var moonSpeed = 0.5; // Speed at which the moon rotates
     // Rotation of the moon to simulate moon phases
     function MoonPhases() {
-      if(moonPaused)
+      // Pauses moon rotation if time is paused
+      if(timePaused)
       {
-        return;
+        moonPaused = true;
       }
-      moon.rotation.y = Math.PI * 2 * currentTime;
+
+      // Adds rotation to the moon
+      if(!moonPaused)
+      {
+        moonRotation += moonSpeed;
+      }
+
+      // Resets moon rotation to 0 when it exceeds 360
+      if(moonRotation >= moonMaxRotation)
+      {
+        moonRotation = 0;
+      }
+
+      // Sets moon rotation
+      moonPhase = moonRotation / moonMaxRotation;
+      moon.rotation.y = Math.PI * 2 * moonPhase;
     }
 
     // Controls
@@ -447,6 +461,22 @@
         },
         set 'Pause Rotation'(v) {
           moonPaused = v;
+        },
+
+        // Set moon rotation
+        get 'Moon Phase'() {
+          return moonRotation;
+        },
+        set 'Moon Phase'(v) {
+          moonRotation = v;
+        },
+
+        // Change speed of rotation
+        get 'Phase Speed'() {
+          return moonSpeed;
+        },
+        set 'Phase Speed'(v) {
+          moonSpeed = v;
         }
       };
       
@@ -459,7 +489,9 @@
     folderBloom.add(bloomParams, 'Bloom Threshold', 0, 1);
     folderBloom.add(bloomParams, 'Bloom Radius', 0, 1);
 
-    folderMoon.add(moonParams, 'Pause Rotation');
+    folderMoon.add(moonParams, 'Pause Rotation').listen().onChange();
+    folderMoon.add(moonParams, 'Moon Phase', 0, 360).listen().onChange();
+    folderMoon.add(moonParams, 'Phase Speed', 0.1, 10);
 
     // Update loop
     var MyUpdateLoop = function () {
