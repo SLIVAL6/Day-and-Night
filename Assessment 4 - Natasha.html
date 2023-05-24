@@ -107,6 +107,7 @@
     var currFrame = 0;
     var vertices = [];
     var v2 = [];
+    var positions = [];
     var treePositions = [];
     var lampPositions = [];
     var pinePositions = [];
@@ -115,12 +116,15 @@
     var lampNumber = 2;
     var treeNumber = 50;
     var pineNumber = 50;
+    var grassNumber = 500;
+    var rockNumber = 50;
     var trees = [];
     var waterHeight = -5;
     var faces = [];
     var reload = false;
     var def = 50;
     var w = 100;
+
 
     
     function buildWater() {
@@ -130,7 +134,7 @@
         {
           textureWidth: 512,
           textureHeight: 512,
-          waterNormals: new THREE.TextureLoader().load('./build/textures/waternormals.jpeg', function ( texture ) {
+          waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           }),
           alpha: 1.0,
@@ -261,8 +265,10 @@
               object.children[i].material.color= new THREE.Color(1,1,1);
             }
 
+            object.castShadow = true;
+            object.receiveShadow = true;
+
             //SPAWNING IN
-            if (reload == false) {
             for (var i = 0; i < lampNumber; i++) {
               var clone = object.clone();
               var raycaster = new THREE.Raycaster();
@@ -276,14 +282,14 @@
               var pos = intersect[0].point;
               //CHECKING IS POSITION IS TAKEN
               var isIn = false;
-              for (var i = 0; i < lampPositions.length; i++) {
-                if (lampPositions[i].x == pos.x && lampPositions[i].y == pos.y && lampPositions[i].z == pos.z) {
+              for (var i = 0; i < positions.length; i++) {
+                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
                   isIn = true;
                 }
               }
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
               if (intersect[0].point.y >= waterHeight+2 && intersect[0].point.y >= peak-6 && isIn == false) {
-                lampPositions.push(pos)
+                positions.push(pos)
                 //console.log(pos);
                 clone.scale.set(1,1,1);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
@@ -294,16 +300,6 @@
               else {
                 i = i - 1;
               } 
-            }
-            }
-            else {
-              for (var i = 0; i < lampPositions.length; i++) {
-                var clone = object.clone();
-                clone.scale.set(1,1,1);
-                clone.position.set(lampPositions[i].x, lampPositions[i].y, lampPositions[i].z);
-                //clone.rotateY(rot);
-                scene.add(clone);
-              }
             }
           });
         } );
@@ -316,13 +312,13 @@
         var bodyMaterial;
         var mtlload = new MTLLoader();
         mtlload.setPath('../models/')
-        mtlload.load('NatureFreePack1.mtl', function(materials) 
+        mtlload.load('Oak_Tree.mtl', function(materials) 
         {
           materials.preload();
           var objload = new OBJLoader();
           objload.setMaterials(materials)
           objload.setPath('../models/')
-          objload.load('tree1.obj', function(object) 
+          objload.load('Oak_Tree.obj', function(object) 
           {
             var box3 = new THREE.Box3();
             box3.setFromObject(object);
@@ -348,7 +344,6 @@
             object.receiveShadow = true;
 
             //SPAWNING IN
-            if (reload == false) {
             for (var i = 0; i < treeNumber; i++) {
               var clone = object.clone();
               var rot = THREE.MathUtils.randFloat(-1,1);
@@ -364,18 +359,19 @@
               //CHECKING IF PLACE IS TAKEN
               var pos = intersect[0].point;
               var isIn = false;
-              for (var i = 0; i < treePositions.length; i++) {
-                if (treePositions[i].x == pos.x && treePositions[i].y == pos.y && treePositions[i].z == pos.z) {
+              for (var i = 0; i < positions.length; i++) {
+                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
                   isIn = true;
                 }
               }
 
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-              if (intersect[0].point.y >= waterHeight+2 && isIn == false) {
+              if (intersect[0].point.y >= waterHeight+2 && isIn == false && intersect[0].point.y < waterHeight+7) {
                 
                 treePositions.push(pos);
+                positions.push(pos);
                 //console.log(pos);
-                clone.scale.set(0.4,0.4,0.4);
+                clone.scale.set(2,2,2);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
                 clone.rotateY(rot);
                 clone.name = "tree";
@@ -388,44 +384,21 @@
                 i = i - 1;
               } 
             }
-            }
-            else {
-              //ClearTrees();
-              for (var i = 0; i < trees.length; i++) {
-                scene.remove(trees[i]);
-              }
-              console.log(trees);
-              for (var i = 0; i < treeNumber; i++) {
-                var clone = object.clone();
-                clone.name = "tree";
-                
-                clone.scale.set(0.4,0.4,0.4);
-                clone.position.set(treePositions[i].x, treePositions[i].y, treePositions[i].z);
-                var rot = THREE.MathUtils.randFloat(-1,1);
-                
-                clone.rotateY(rot);
-                trees.push(clone);
-                scene.add(clone);
-              }
-            }
           });
         });
       }
 
       //LOAD PINE TREES
       function spawnPines() {
-        var treeModel;
-        var treeMaterial1;
-        var bodyMaterial;
         var mtlload = new MTLLoader();
         mtlload.setPath('../models/')
-        mtlload.load('NatureFreePack1.mtl', function(materials) 
+        mtlload.load('Fir_Tree.mtl', function(materials) 
         {
           materials.preload();
           var objload = new OBJLoader();
           objload.setMaterials(materials)
           objload.setPath('../models/')
-          objload.load('pine1.obj', function(object) 
+          objload.load('Fir_Tree.obj', function(object) 
           {
             var box3 = new THREE.Box3();
             box3.setFromObject(object);
@@ -433,14 +406,6 @@
             var SizeBB = new THREE.Vector3();
             box3.getCenter(CenterBB);
             box3.getSize(SizeBB);
-
-            // Change colour
-            /*
-            bodyMaterial = materials.materials.Body;
-            var red = Math.random();
-            var green = Math.random();
-            var blue = Math.random();
-            changeColor(bodyMaterial, new THREE.Color(red, green, blue));*/
 
             for(var i = 0, l = object.children.length; i < l; i ++) 
             {
@@ -451,7 +416,6 @@
             object.receiveShadow = true;
 
             //SPAWNING IN
-            if (reload == false) {
             for (var i = 0; i < pineNumber; i++) {
               var clone = object.clone();
               var rot = THREE.MathUtils.randFloat(-1,1);
@@ -475,10 +439,10 @@
 
               //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
               if (intersect[0].point.y >= waterHeight+7 && isIn == false) {
-                
                 pinePositions.push(pos);
+                positions.push(pos);
                 //console.log(pos);
-                clone.scale.set(0.4,0.4,0.4);
+                clone.scale.set(2,2,2);
                 clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
                 clone.rotateY(rot);
                 trees.push(clone);
@@ -489,16 +453,145 @@
                 i = i - 1;
               } 
             }
+          });
+        });
+      }
+
+      function spawnGrass() {
+        var mtlload = new MTLLoader();
+        mtlload.setPath('../models/')
+        mtlload.load('grass_low_poly.mtl', function(materials) 
+        {
+          materials.preload();
+          var objload = new OBJLoader();
+          objload.setMaterials(materials)
+          objload.setPath('../models/')
+          objload.load('grass_low_poly.obj', function(object) 
+          {
+            var box3 = new THREE.Box3();
+            box3.setFromObject(object);
+            var CenterBB = new THREE.Vector3();
+            var SizeBB = new THREE.Vector3();
+            box3.getCenter(CenterBB);
+            box3.getSize(SizeBB);
+
+            for(var i = 0, l = object.children.length; i < l; i ++) 
+            {
+              object.children[i].material.color = new THREE.Color(1,1,1);
             }
-            else {
-              trees.remove(object);
-              for (var i = 0; i < pinePositions.length; i++) {
-                var clone = object.clone();
-                clone.scale.set(0.4,0.4,0.4);
-                clone.position.set(pinePositions[i].x, pinePositions[i].y, pinePositions[i].z);
-                //clone.rotateY(rot);
-                scene.add(clone);
+
+            object.castShadow = true;
+            object.receiveShadow = true;
+
+            //SPAWNING IN
+            for (var i = 0; i < grassNumber; i++) {
+              var clone = object.clone();
+              var rot = THREE.MathUtils.randFloat(-1,1);
+              var raycaster = new THREE.Raycaster();
+              var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+              var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+              var rayPos = new THREE.Vector3(posx,1000,posz);
+              var rayDir = new THREE.Vector3(0, -1, 0);
+              var ray = new THREE.Ray(rayPos, rayDir);
+              raycaster.ray = ray;
+              let intersect = raycaster.intersectObject(terrain);
+
+              //CHECKING IF PLACE IS TAKEN
+              var pos = intersect[0].point;
+              var isIn = false;
+              for (var i = 0; i < positions.length; i++) {
+                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                  isIn = true;
+                }
               }
+
+              //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+              if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+                
+                positions.push(pos);
+                //console.log(pos);
+                clone.scale.set(0.1,0.1,0.1);
+                clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+                clone.rotateY(rot);
+                trees.push(clone);
+                scene.add(clone);
+                console.log("grass");
+              }
+              //OTHERWISE TRYING AGAIN
+              else {
+                i = i - 1;
+              } 
+            }
+          });
+        });
+      }
+
+      function spawnRocks() {
+        var mtlload = new MTLLoader();
+        mtlload.setPath('../models/')
+        mtlload.load('Rocks.mtl', function(materials) 
+        {
+          materials.preload();
+          var objload = new OBJLoader();
+          objload.setMaterials(materials)
+          objload.setPath('../models/')
+          objload.load('Rock1.obj', function(object) 
+          {
+            var box3 = new THREE.Box3();
+            box3.setFromObject(object);
+            var CenterBB = new THREE.Vector3();
+            var SizeBB = new THREE.Vector3();
+            box3.getCenter(CenterBB);
+            box3.getSize(SizeBB);
+
+            for(var i = 0, l = object.children.length; i < l; i ++) 
+            {
+              object.children[i].material.color = new THREE.Color(1,1,1);
+            }
+
+            object.castShadow = true;
+            object.receiveShadow = true;
+
+            //SPAWNING IN
+            rockNumber = 50;
+            for (var i = 0; i < rockNumber; i++) {
+              var clone = object.clone();
+              var rot = THREE.MathUtils.randFloat(-1,1);
+              var raycaster = new THREE.Raycaster();
+              var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+              var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+              var rayPos = new THREE.Vector3(posx,1000,posz);
+              var rayDir = new THREE.Vector3(0, -1, 0);
+              var ray = new THREE.Ray(rayPos, rayDir);
+              raycaster.ray = ray;
+              let intersect = raycaster.intersectObject(terrain);
+
+              var pos = intersect[0].point;
+              //CHECKING IF PLACE IS TAKEN
+              /*
+              var isIn = false;
+              for (var i = 0; i < positions.length; i++) {
+                if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                  isIn = true;
+                }
+              }*/
+
+              //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+              if (intersect[0].point.y >= waterHeight+0.5 ){//&& isIn == false) {
+                
+                positions.push(pos);
+                //console.log(pos);
+                clone.scale.set(5,5,5);
+                clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+                //clone.rotateY(rot);
+                trees.push(clone);
+                scene.add(clone);
+                console.log("rock");
+              }
+              //OTHERWISE TRYING AGAIN
+              else {
+                i = i - 1;
+              } 
             }
           });
         });
@@ -508,7 +601,10 @@
       //spawning things called
       spawnLamps();
       spawnTrees();
-      //spawnPines();
+      spawnPines();
+      spawnRocks();
+      spawnGrass();
+      
 
       
 
