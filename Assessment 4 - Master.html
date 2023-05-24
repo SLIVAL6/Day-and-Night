@@ -112,20 +112,6 @@
     // Render Pass
     const renderScene = new RenderPass (scene, camera);
 
-    //Skybox
-    const sky = new Sky();
-    function createSky(){
-        sky.scale.setScalar(10000);
-        scene.add(sky);
-
-        const skyEffects = {
-            turbidity: 10,
-            reyleigh: 2,
-            minCoefficient: 0.005,
-            mieDirectionalG: 0.7
-        };
-    }
-
     // Bloom layer and bloom values
     const layers = 3;
     const params = {
@@ -284,7 +270,7 @@
       requestAnimationFrame(animate);
       renderer.render(scene, camera);
     }
-    
+
     animate();
 
     CreateScene();
@@ -347,6 +333,25 @@
       moon.rotation.y = 0;
       moon.rotation.z = 0;
     }
+
+     //Sky
+     const sky = new Sky();
+    function createSky(){
+        sky.scale.setScalar(10000);
+        scene.add(sky);
+
+        const skyEffects = {
+            turbidity: 10,
+            reyleigh: 2,
+            minCoefficient: 0.005,
+            mieDirectionalG: 0.7
+        };
+
+        const skyUniforms = sky.material.uniforms;
+        skyUniforms[ 'sunPosition '].value.copy(sun);
+
+    }
+    createSky();
 
     var plane;
     var planeMaterial;
