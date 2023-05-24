@@ -267,6 +267,43 @@
 
     CreateScene();
 
+    // Random Star Location Generator
+    function randomLocation(){
+        var num = Math.floor(Math.random() * 50) + 1; 
+        num *= Math.floor(Math.random() * 2) == 1 ? 1 : -1;
+        return num;
+    }
+
+    // Star Generation
+    var stars = [];
+
+    for(let i = 0; i < 200; i++){
+      let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+      let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
+      let star = new THREE.Mesh(star_geometry, star_material);
+      star.position.set(randomLocation(), randomLocation() + 75, randomLocation());
+      stars.push(star);
+    }
+
+    for(let i = 0; i < stars.length; i++){
+      scene.add(stars[i]);
+    }
+
+    // Animate Stars
+    var star_lightness = 0;
+    function animate(){
+      for(let i = 0; i < stars.length; i++){
+        let star = stars[i];
+        star.rotation.x += 0.01;
+        star.rotation.y += 0.01;
+      }
+      
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
     var sun;
     var sunMaterial;
     function CreateSun() {
