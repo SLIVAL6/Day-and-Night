@@ -154,61 +154,16 @@
     }
 
 
-
-
-    
-    
-
-    //function CreateScene() {
     //Creates the terrain Plane
     var planeGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
     var planeMaterial = new THREE.MeshBasicMaterial();
-    
-    //planeMaterial.wireframe = true;
     planeMaterial.vertexColors = THREE.VertexColors;
-    
     planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
-
-
-    /*var planeMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        color1: {
-          value: new THREE.Color(1,1,1)
-        },
-        color2: {
-          value: new THREE.Color(0.078, 1, 0)
-        }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 color1;
-        uniform vec3 color2;
-      
-        varying vec2 vUv;
-        
-        void main() {
-          
-          gl_FragColor = vec4(mix(color1, color2, vUv.x), 1.0);
-        }
-      `,
-      wireframe: true
-      //side: DoubleSide
-    });*/
-
     planeMaterial.side = THREE.DoubleSide;
-        
     var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
     scene.add(terrain);
 
     //Adds noise to terrain
-    if (reload == false) {
     var perlin = new Perlin();
     var peak = 12;
     var smoothing = 100;
@@ -222,18 +177,6 @@
         );
         //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
     }
-    }
-    else {
-      v2 = terrain.geometry.attributes.position.array;
-      for (var i = 0; i < vertices.length; i++) {
-        v2[i] = vertices[i];
-      }
-      terrain.geometry.rotateX(Math.PI/2);
-    }
-    //for (var i = 0; i < terrain.geometry.attributes; i++) {
-      //terrain.geometry.attributes.color = new THREE.Color( 1,1,0 );
-    //}
-
     terrain.geometry.attributes.position.needsUpdate = true;
     terrain.geometry.computeVertexNormals();
     terrain.geometry.rotateX(Math.PI/2);
