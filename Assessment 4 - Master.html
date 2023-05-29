@@ -159,13 +159,19 @@
     const ambientLight = new THREE.AmbientLight(0x404040);
     ambientLight.intensity = 1;
 
-    // Directional light from the sun
+    // Light from the sun
     const sunLight = new THREE.PointLight( { color: 'white' } );
     sunLight.intensity = 1
     sunLight.castShadow = true;
     sunLight.position.x = 40;
     sunLight.position.y = 0;
     sunLight.position.z = 0;
+
+    const directionalLight = new THREE.DirectionalLight( { color: 'white' });
+    directionalLight.castShadow = false;
+    directionalLight.position.x = 40;
+    directionalLight.position.y = 0;
+    directionalLight.position.z = 0;
 
     // Material used for bloom processing
     const darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
@@ -237,6 +243,7 @@
       point.add(sun);
       point.add(moon);
       point.add(sunLight);
+      point.add(directionalLight);
       scene.add(point);
       point.rotation.z = Math.PI;
 
@@ -529,8 +536,12 @@
             object.children[i].material.color= new THREE.Color(1,1,1);
           }
 
-          object.castShadow = true;
-          object.receiveShadow = true;
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
 
           //SPAWNING IN
           for (var i = 0; i < lampNumber; i++) {
