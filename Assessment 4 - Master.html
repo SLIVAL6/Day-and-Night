@@ -160,7 +160,7 @@
     ambientLight.intensity = 1;
 
     // Directional light from the sun
-    const sunLight = new THREE.DirectionalLight( { color: 'white' } );
+    const sunLight = new THREE.PointLight( { color: 'white' } );
     sunLight.intensity = 1
     sunLight.castShadow = true;
     sunLight.position.x = 40;
@@ -460,6 +460,8 @@
 
     // Water plane
     var water;
+    var waterDefault;
+    var waterDark;
     function BuildWater() {
       const waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
       water = new Water(
@@ -478,12 +480,30 @@
           fog: scene.fog !== undefined
         }
       );
+      waterDefault = water;
+
+      waterDark = new Water(
+        waterGeometry,
+        {
+          textureWidth: 512,
+          textureHeight: 512,
+          waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+          }),
+          alpha: 1.0,
+          sunDirection: new THREE.Vector3(),
+          sunColor: 0x000000,
+          waterColor: 0x000000,
+          distortionScale: 3.7,
+          fog: scene.fog !== undefined
+        }
+      );
+
       water.rotation.x =- Math.PI / 2;
       water.position.y = waterHeight;
       scene.add(water);
       
       const waterUniforms = water.material.uniforms;
-      return water;
     }
 
     // LOAD LAMPS
@@ -550,7 +570,11 @@
 
     // LOAD TREES
     var treeMaterial1;
-    var bodyMaterial;
+    var treeMaterial2;
+    var treeMaterial3;
+    var treeMaterial1Default;
+    var treeMaterial2Default;
+    var treeMaterial3Default;
     function SpawnTrees() {
       var treeModel;
       var mtlload = new MTLLoader();
@@ -570,21 +594,26 @@
           box3.getCenter(CenterBB);
           box3.getSize(SizeBB);
 
-          // Change colour
-          /*
-          bodyMaterial = materials.materials.Body;
-          var red = Math.random();
-          var green = Math.random();
-          var blue = Math.random();
-          changeColor(bodyMaterial, new THREE.Color(red, green, blue));*/
+          // Sets materials
+          treeMaterial1 = materials.materials.Green;
+          treeMaterial2 = materials.materials.Green_2;
+          treeMaterial3 = materials.materials.Trunk;
+
+          treeMaterial1Default = treeMaterial1;
+          treeMaterial2Default = treeMaterial2;
+          treeMaterial3Default = treeMaterial3;
 
           for(var i = 0, l = object.children.length; i < l; i ++) 
           {
             object.children[i].material.color = new THREE.Color(1,1,1);
           }
 
-          object.castShadow = true;
-          object.receiveShadow = true;
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
 
           // SPAWNING IN
           for (var i = 0; i < treeNumber; i++) {
@@ -631,6 +660,8 @@
     }
 
     // LOAD PINE TREES
+    var pineMaterial;
+    var pineMaterialDefault;
     function SpawnPines() {
       var mtlload = new MTLLoader();
       mtlload.setPath('../models/')
@@ -649,13 +680,19 @@
           box3.getCenter(CenterBB);
           box3.getSize(SizeBB);
 
+          // Sets materials
+
           for(var i = 0, l = object.children.length; i < l; i ++) 
           {
             object.children[i].material.color = new THREE.Color(1,1,1);
           }
 
-          object.castShadow = true;
-          object.receiveShadow = true;
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
 
           //SPAWNING IN
           for (var i = 0; i < pineNumber; i++) {
@@ -722,8 +759,12 @@
             object.children[i].material.color = new THREE.Color(1,1,1);
           }
 
-          object.castShadow = true;
-          object.receiveShadow = true;
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
 
           //SPAWNING IN
           for (var i = 0; i < grassNumber; i++) {
@@ -790,8 +831,12 @@
             object.children[i].material.color = new THREE.Color(1,1,1);
           }
 
-          object.castShadow = true;
-          object.receiveShadow = true;
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
 
           //SPAWNING IN
           rockNumber = 50;
@@ -996,16 +1041,29 @@
       MoonPhases();
       SunMoonRotation();
       
-      // Processes bloom
+      // Objects unaffected by bloom
       terrain.material = darkMaterial;
       cube.material = darkMaterial; // testing
 
+      treeMaterial1 = darkMaterial;
+      treeMaterial2 = darkMaterial;
+      treeMaterial3 = darkMaterial;
+
+      water = waterDark;
+
       bloomComposer.render();
 
+      // Processes bloom for all objects
       terrain.material = terrainMaterial;
       sun.material = sunMaterial;
       moon.material = moonMaterial;
       cube.material = terrainMaterial; // testing
+
+      treeMaterial1 = treeMaterial1Default;
+      treeMaterial2 = treeMaterial2Default;
+      treeMaterial3 = treeMaterial3Default;
+
+      water = waterDefault;
       
       finalComposer.render();
 
