@@ -177,9 +177,30 @@
         );
         //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
     }
+
     terrain.geometry.attributes.position.needsUpdate = true;
     terrain.geometry.computeVertexNormals();
     terrain.geometry.rotateX(Math.PI/2);
+
+    var places = [];
+
+    for (var i = -worldSize/2; i < worldSize/2; i++) {
+      for (var j = -worldSize/2; j < worldSize/2; j++) {
+        var raycaster = new THREE.Raycaster();
+        var rayPos = new THREE.Vector3(i,500,j);
+        var rayDir = new THREE.Vector3(0, -1, 0);
+        var ray = new THREE.Ray(rayPos, rayDir);
+        raycaster.ray = ray;
+        let intersect = raycaster.intersectObject(terrain);
+        //var pos = intersect.point;
+        //places.push(pos);
+        places.push(intersect[0].point.x, intersect[0].point.y, intersect[0].point.z);
+      }
+    }
+    console.log(places);
+
+
+    
 
 
 
@@ -542,12 +563,12 @@
     
 
     //spawning things called
-    buildWater();
-    spawnLamps();
-    spawnTrees();
-    spawnPines();
-    spawnRocks();
-    spawnGrass();
+    //buildWater();
+    //spawnLamps();
+    //spawnTrees();
+    //spawnPines();
+    //spawnRocks();
+    //spawnGrass();
     
 
     console.log(lampPositions);
