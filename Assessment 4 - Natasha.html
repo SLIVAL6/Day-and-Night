@@ -146,8 +146,6 @@
     var max = 0;
     var lowest = 0;
     vertices = terrain.geometry.attributes.position.array;
-    //faces = terrain.geometry.attributes.color.array;
-    //faces = terrain.geometry.faces;
     for (var i = 0; i <= vertices.length; i += 3) {
         vertices[i+2] = peak * perlin.noise(
             vertices[i]/smoothing, 
@@ -159,7 +157,6 @@
         if (vertices[i] < lowest) {
           lowest = vertices[i];
         }
-        //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
     }
 
     terrain.geometry.attributes.position.needsUpdate = true;

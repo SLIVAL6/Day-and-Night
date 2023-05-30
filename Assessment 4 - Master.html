@@ -387,23 +387,35 @@
 
       scene.add(terrain);
 
-      // Adds noise to terrain
+      //Adds noise to terrain
       perlin = new Perlin();
       peak = 12;
       smoothing = 100;
+      var max = 0;
+      var lowest = 0;
       vertices = terrain.geometry.attributes.position.array;
-      // faces = terrain.geometry.attributes.color.array;
-      // faces = terrain.geometry.faces;
       for (var i = 0; i <= vertices.length; i += 3) {
           vertices[i+2] = peak * perlin.noise(
               vertices[i]/smoothing, 
               vertices[i+1]/smoothing
           );
-          // terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
+          if (vertices[i] > max){
+            max = vertices[i];
+          }
+          if (vertices[i] < lowest) {
+            lowest = vertices[i];
+          }
       }
+
       terrain.geometry.attributes.position.needsUpdate = true;
       terrain.geometry.computeVertexNormals();
       terrain.geometry.rotateX(Math.PI/2);
+
+      console.log("max: " + max);
+      console.log("lowest: " + lowest);
+
+      var dif = max-lowest;
+      waterHeight = lowest+(dif/2);
     }
 
     const maxTime = 1440; // Amount of minutes in a day (24 hrs * 60 mins)
@@ -561,7 +573,7 @@
               }
             }
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+2 && intersect[0].point.y >= peak-6 && isIn == false) {
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
               positions.push(pos)
               clone.scale.set(1,1,1);
               clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
@@ -647,7 +659,7 @@
             }
 
             // CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y > waterHeight && isIn == false && intersect[0].point.y < waterHeight+5) {
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
               
               treePositions.push(pos);
               positions.push(pos);
@@ -726,7 +738,7 @@
             }
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+1 && isIn == false) {
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
               pinePositions.push(pos);
               positions.push(pos);
               clone.scale.set(2,2,2);
