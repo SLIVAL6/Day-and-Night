@@ -127,6 +127,52 @@
 
 
     
+    
+
+
+    //Creates the terrain Plane
+    var planeGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
+    var planeMaterial = new THREE.MeshBasicMaterial();
+    planeMaterial.vertexColors = THREE.VertexColors;
+    planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
+    planeMaterial.side = THREE.DoubleSide;
+    var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
+    scene.add(terrain);
+
+    //Adds noise to terrain
+    var perlin = new Perlin();
+    var peak = 12;
+    var smoothing = 100;
+    var max = 0;
+    var lowest = 0;
+    vertices = terrain.geometry.attributes.position.array;
+    //faces = terrain.geometry.attributes.color.array;
+    //faces = terrain.geometry.faces;
+    for (var i = 0; i <= vertices.length; i += 3) {
+        vertices[i+2] = peak * perlin.noise(
+            vertices[i]/smoothing, 
+            vertices[i+1]/smoothing
+        );
+        if (vertices[i+2] > max){
+          max = vertices[i+2];
+        }
+        if (vertices[i+2] < lowest) {
+          lowest = vertices[i+2];
+        }
+        //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
+    }
+
+    terrain.geometry.attributes.position.needsUpdate = true;
+    terrain.geometry.computeVertexNormals();
+    terrain.geometry.rotateX(Math.PI/2);
+
+    console.log("max: " + max);
+    console.log("lowest: " + lowest);
+
+    var dif = max-lowest;
+    waterHeight = lowest+(dif/4);
+
+
     function buildWater() {
       const waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
       const water = new Water(
@@ -154,6 +200,7 @@
     }
 
 
+<<<<<<< Updated upstream
     //Creates the terrain Plane
     var planeGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
     var planeMaterial = new THREE.MeshBasicMaterial();
@@ -204,6 +251,8 @@
 
 
 
+=======
+>>>>>>> Stashed changes
 
 
     //LOAD LAMPS
@@ -574,6 +623,7 @@
     console.log(lampPositions);
     console.log(treePositions);
     console.log(pinePositions);
+    console.log(waterHeight);
 
 
 
