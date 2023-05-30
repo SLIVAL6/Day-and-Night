@@ -103,10 +103,13 @@
     camera.position.set(0, 5, 15);
     camera.lookAt(0, 0, 1);
 
+    THREE.ColorManagement.legacyMode = false
+
     // Renderer setup
     var renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -120,7 +123,7 @@
     const params = {
       exposure: 1,
       bloomStrength: 10,
-      bloomThreshold: 0,
+      bloomThreshold: 0.85,
       bloomRadius: 0
     };
 
@@ -231,7 +234,6 @@
 
     // Creates Scene
     var point;
-    var cube; // testing
     function CreateScene() {
       // Createss objects
       CreateSun();
@@ -261,15 +263,6 @@
 
       // Adds lighting
       scene.add(ambientLight);
-
-      // Adds cube for light testing
-      cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), darkMaterial);
-      cube.position.x = 0;
-      cube.position.y = 10;
-      cube.position.z = 0;
-      cube.castShadow = true;
-      cube.receiveShadow = true;
-      scene.add(cube);
     }
 
     CreateScene();
@@ -315,9 +308,12 @@
     var sunMaterial;
     function CreateSun() {
       // Material for the Sun
-      sunMaterial = new THREE.MeshLambertMaterial();
+      sunMaterial = new THREE.MeshBasicMaterial();
       sunMaterial.color.setHSL(0.152, 0.95, 0.57);
+      //sunMaterial.color.setRGB(20,20,20);
       sunMaterial.wireframe = false;
+      sunMaterial.toneMapped = false;
+      sunMaterial.emissiveIntensity = 10;
 
       // Sphere geometry for the Sun
       var sunGeometry = new THREE.SphereGeometry(2, 15, 15);
@@ -347,6 +343,8 @@
       moonMaterial = new THREE.MeshLambertMaterial();
       moonMaterial.color.setHSL(0, 0, 0.8);
       moonMaterial.wireframe = false;
+      moonMaterial.toneMapped = false;
+      moonMaterial.emissiveIntensity = 10;
       moonMaterial.map = textureMoon;
 
       // Sphere geometry for the Moon
@@ -839,8 +837,10 @@
 
           for(var i = 0, l = object.children.length; i < l; i ++) 
           {
-            object.children[i].material.color = new THREE.Color(1,1,1);
+            object.children[i].material.color = new THREE.Color(0.8,0.8,0.8);
           }
+
+          materials.materials.Material.color.setHSL(0, 0, 0.5);
 
           // Cast and receive shadows
           object.traverse(function(node) {
@@ -1054,7 +1054,6 @@
       
       // Objects unaffected by bloom
       terrain.material = darkMaterial;
-      cube.material = darkMaterial; // testing
 
       treeMaterial1 = darkMaterial;
       treeMaterial2 = darkMaterial;
@@ -1068,7 +1067,6 @@
       terrain.material = terrainMaterial;
       sun.material = sunMaterial;
       moon.material = moonMaterial;
-      cube.material = terrainMaterial; // testing
 
       treeMaterial1 = treeMaterial1Default;
       treeMaterial2 = treeMaterial2Default;
