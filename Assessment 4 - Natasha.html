@@ -127,6 +127,73 @@
 
 
     
+    
+
+
+    //Creates the terrain Plane
+    var planeGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
+    var planeMaterial = new THREE.MeshBasicMaterial();
+    planeMaterial.vertexColors = THREE.VertexColors;
+    planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
+    planeMaterial.side = THREE.DoubleSide;
+    var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
+    scene.add(terrain);
+
+    //Adds noise to terrain
+    var perlin = new Perlin();
+    var peak = 12;
+    var smoothing = 100;
+    var max = 0;
+    var lowest = 0;
+    vertices = terrain.geometry.attributes.position.array;
+    //faces = terrain.geometry.attributes.color.array;
+    //faces = terrain.geometry.faces;
+    for (var i = 0; i <= vertices.length; i += 3) {
+        vertices[i+2] = peak * perlin.noise(
+            vertices[i]/smoothing, 
+            vertices[i+1]/smoothing
+        );
+        if (vertices[i] > max){
+          max = vertices[i];
+        }
+        if (vertices[i] < lowest) {
+          lowest = vertices[i];
+        }
+        //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
+    }
+
+    terrain.geometry.attributes.position.needsUpdate = true;
+    terrain.geometry.computeVertexNormals();
+    terrain.geometry.rotateX(Math.PI/2);
+
+    console.log("max: " + max);
+    console.log("lowest: " + lowest);
+
+    var dif = max-lowest;
+    waterHeight = lowest+(dif/2);
+
+
+    
+    /*
+    //ray testing
+    var places = [];
+
+    for (var i = -worldSize/2; i < worldSize/2; i=i+1) {
+      for (var j = -worldSize/2; j < worldSize/2; i=i+1) {
+        let raycaster = new THREE.Raycaster();
+        let rayPos = new THREE.Vector3(i,500,j);
+        let rayDir = new THREE.Vector3(0, -1, 0);
+        let ray = new THREE.Ray(rayPos, rayDir);
+        raycaster.ray = ray;
+        let intersect = raycaster.intersectObject(terrain);
+        //var pos = intersect[0].point;
+        places.push(intersect.point);
+        //places.push(intersect[0].point.x, intersect[0].point.y, intersect[0].point.z);
+      }
+    }
+    console.log(places);*/
+
+
     function buildWater() {
       const waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
       const water = new Water(
@@ -152,37 +219,6 @@
       const waterUniforms = water.material.uniforms;
       return water;
     }
-
-
-    //Creates the terrain Plane
-    var planeGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
-    var planeMaterial = new THREE.MeshBasicMaterial();
-    planeMaterial.vertexColors = THREE.VertexColors;
-    planeMaterial.color = new THREE.Color(0.694, 1, 0.431);
-    planeMaterial.side = THREE.DoubleSide;
-    var terrain = new THREE.Mesh(planeGeometry,planeMaterial);
-    scene.add(terrain);
-
-    //Adds noise to terrain
-    var perlin = new Perlin();
-    var peak = 12;
-    var smoothing = 100;
-    vertices = terrain.geometry.attributes.position.array;
-    //faces = terrain.geometry.attributes.color.array;
-    //faces = terrain.geometry.faces;
-    for (var i = 0; i <= vertices.length; i += 3) {
-        vertices[i+2] = peak * perlin.noise(
-            vertices[i]/smoothing, 
-            vertices[i+1]/smoothing
-        );
-        //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
-    }
-    terrain.geometry.attributes.position.needsUpdate = true;
-    terrain.geometry.computeVertexNormals();
-    terrain.geometry.rotateX(Math.PI/2);
-
-
-
 
 
     //LOAD LAMPS
@@ -231,7 +267,7 @@
               }
             }
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+2 && intersect[0].point.y >= peak-6 && isIn == false) {
+            if (intersect[0].point.y > waterHeight && isIn == false) {
               positions.push(pos)
               //console.log(pos);
               clone.scale.set(1,1,1);
@@ -309,7 +345,7 @@
             }
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y > waterHeight && isIn == false && intersect[0].point.y < waterHeight+5) {
+            if (intersect[0].point.y > waterHeight && isIn == false ){//&& intersect[0].point.y < waterHeight+5) {
               
               treePositions.push(pos);
               positions.push(pos);
@@ -381,7 +417,7 @@
             }
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+1 && isIn == false) {
+            if (intersect[0].point.y >= waterHeight && isIn == false) {
               pinePositions.push(pos);
               positions.push(pos);
               //console.log(pos);
@@ -449,7 +485,7 @@
             }
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+            if (intersect[0].point.y > waterHeight && isIn == false) {
               
               positions.push(pos);
               //console.log(pos);
@@ -520,7 +556,7 @@
             }*/
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+0.5 ){//&& isIn == false) {
+            if (intersect[0].point.y > waterHeight ){//&& isIn == false) {
               
               positions.push(pos);
               //console.log(pos);
@@ -553,6 +589,7 @@
     console.log(lampPositions);
     console.log(treePositions);
     console.log(pinePositions);
+    console.log(waterHeight);
 
 
 
