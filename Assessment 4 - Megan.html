@@ -207,6 +207,7 @@
       CreateSun();
       CreateMoon();
       CreateLensflare();
+      CreateStars();
       
       // Attaches the sun and moon to world point (0, 0, 0)
       point = new THREE.Group();
@@ -245,17 +246,18 @@
 
     // Star Generation
     var stars = [];
-
-    for(let i = 0; i < 200; i++){
+    function CreateStars(){
+      for(let i = 0; i < 200; i++){
       let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
       let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
       let star = new THREE.Mesh(star_geometry, star_material);
       star.position.set(randomLocation(), randomLocation() + 75, randomLocation());
       stars.push(star);
-    }
+      }
 
-    for(let i = 0; i < stars.length; i++){
+     for(let i = 0; i < stars.length; i++){
       scene.add(stars[i]);
+      }
     }
 
     // Animate Stars
@@ -335,24 +337,15 @@
     }
 
      //Sky
-     const sky = new Sky();
-    function createSky(){
-        sky.scale.setScalar(10000);
-        scene.add(sky);
-
-        const skyEffects = {
-            turbidity: 10,
-            reyleigh: 2,
-            minCoefficient: 0.005,
-            mieDirectionalG: 0.7
-        };
-
-        const skyUniforms = sky.material.uniforms;
-        //skyUniforms[ 'sunPosition '].value.copy(sun);
-
+    function CreateSky(color){
+				const sky = new THREE.Mesh(
+					new THREE.SphereGeometry( 50 ),
+					new THREE.MeshBasicMaterial( {  side: THREE.BackSide, color } )
+				);
+				scene.add( sky );
     }
-    createSky();
-
+    CreateSky(0x87ceeb);
+     
     var plane;
     var planeMaterial;
     function CreatePlane() {
@@ -403,6 +396,17 @@
       // Sets current time
       currentTime = time / maxTime;
     }
+
+    // Changes the colour of the Sky
+    function UpdateSkyColor(){
+      if(1440 > time >= 720){
+        CreateSky(0x000000); //night
+      }
+      else if(0 <= time < 720) {
+        CreateSky(0x87ceeb); //day
+      }
+    }
+    UpdateSkyColor();
 
     // Rotation of the Sun and Moon around world point (0, 0, 0)
     function SunMoonRotation() {
