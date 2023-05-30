@@ -153,11 +153,11 @@
             vertices[i]/smoothing, 
             vertices[i+1]/smoothing
         );
-        if (vertices[i+2] > max){
-          max = vertices[i+2];
+        if (vertices[i] > max){
+          max = vertices[i];
         }
-        if (vertices[i+2] < lowest) {
-          lowest = vertices[i+2];
+        if (vertices[i] < lowest) {
+          lowest = vertices[i];
         }
         //terrain.geometry.vertexColors.push( new THREE.Color(1,0,0));
     }
@@ -170,7 +170,28 @@
     console.log("lowest: " + lowest);
 
     var dif = max-lowest;
-    waterHeight = lowest+(dif/6);
+    waterHeight = lowest+(dif/2);
+
+
+    
+    /*
+    //ray testing
+    var places = [];
+
+    for (var i = -worldSize/2; i < worldSize/2; i=i+1) {
+      for (var j = -worldSize/2; j < worldSize/2; i=i+1) {
+        let raycaster = new THREE.Raycaster();
+        let rayPos = new THREE.Vector3(i,500,j);
+        let rayDir = new THREE.Vector3(0, -1, 0);
+        let ray = new THREE.Ray(rayPos, rayDir);
+        raycaster.ray = ray;
+        let intersect = raycaster.intersectObject(terrain);
+        //var pos = intersect[0].point;
+        places.push(intersect.point);
+        //places.push(intersect[0].point.x, intersect[0].point.y, intersect[0].point.z);
+      }
+    }
+    console.log(places);*/
 
 
     function buildWater() {
@@ -246,7 +267,7 @@
               }
             }
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+2 && intersect[0].point.y >= peak-6 && isIn == false) {
+            if (intersect[0].point.y > waterHeight && isIn == false) {
               positions.push(pos)
               //console.log(pos);
               clone.scale.set(1,1,1);
@@ -464,7 +485,7 @@
             }
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+            if (intersect[0].point.y > waterHeight && isIn == false) {
               
               positions.push(pos);
               //console.log(pos);
@@ -535,7 +556,7 @@
             }*/
 
             //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
-            if (intersect[0].point.y >= waterHeight+0.5 ){//&& isIn == false) {
+            if (intersect[0].point.y > waterHeight ){//&& isIn == false) {
               
               positions.push(pos);
               //console.log(pos);
