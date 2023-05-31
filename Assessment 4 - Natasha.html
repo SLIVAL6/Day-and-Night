@@ -60,6 +60,7 @@
     import { GUI } from './build/lil-gui.module.min.js';
     import { Water } from './build/Water.js';
     import { Sky } from './build/Sky.js';
+    import { Reflector } from './build/Reflector.js';
 
     // Create scene
     var scene = new THREE.Scene();
@@ -124,6 +125,7 @@
     var reload = false;
     var def = 50;
     var w = 100;
+    var watercheck = true;
 
 
     
@@ -151,11 +153,11 @@
             vertices[i]/smoothing, 
             vertices[i+1]/smoothing
         );
-        if (vertices[i] > max){
-          max = vertices[i];
+        if (vertices[i+2]/smoothing > max){
+          max = vertices[i+2]/smoothing;
         }
-        if (vertices[i] < lowest) {
-          lowest = vertices[i];
+        if (vertices[i+2]/smoothing < lowest) {
+          lowest = vertices[i+2]/smoothing;
         }
     }
 
@@ -166,8 +168,13 @@
     console.log("max: " + max);
     console.log("lowest: " + lowest);
 
-    var dif = max-lowest;
-    waterHeight = lowest+(dif/2);
+    
+    var dif = max-lowest-1;
+    waterHeight = dif-2;
+    if (dif < 15) {
+      //watercheck = false;
+    }
+    console.log(waterHeight);
 
 
     
@@ -190,32 +197,74 @@
     }
     console.log(places);*/
 
-
+    var vertices2;
+    var water;
     function buildWater() {
-      const waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
-      const water = new Water(
-        waterGeometry,
-        {
-          textureWidth: 512,
-          textureHeight: 512,
-          waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
-            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-          }),
-          alpha: 1.0,
-          sunDirection: new THREE.Vector3(),
-          sunColor: 0xffffff,
-          waterColor: 0x00d5ff,
-          distortionScale: 3.7,
-          fog: scene.fog !== undefined
-        }
-      );
-      water.rotation.x =- Math.PI / 2;
-      water.position.y = waterHeight;
+      /*var waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize, 256, 256);
+      var waterMaterial = new THREE.MeshLambertMaterial();
+      waterMaterial.color = new THREE.Color(0, 0.843, 1);
+      waterMaterial.side = THREE.DoubleSide;
+      waterMaterial.transparent = true;
+      waterMaterial.opacity = 0.2;
+      waterMaterial.reflectivity = 100;
+      water = new THREE.Mesh(waterGeometry,waterMaterial);
       scene.add(water);
+      water.geometry.attributes.position.needsUpdate = true;
+      water.geometry.computeVertexNormals();
+      water.position.y = waterHeight+0.01;
+      water.geometry.rotateX(-Math.PI/2);*/
+
+      var waterMirrorGeometry = new THREE.PlaneGeometry(worldSize, worldSize, 256, 256);
+      var waterMirror = new Reflector( waterMirrorGeometry, {
+        clipBias: 0.003,
+        textureWidth: window.innerWidth * window.devicePixelRatio,
+        textureHeight: window.innerHeight * window.devicePixelRatio,
+        //color: 0x5c8ead
+      } );
+      waterMirror.position.y = waterHeight;
+      waterMirror.rotateX(-Math.PI/2);
+      scene.add(waterMirror);
+
+      /*
+      var perlin2 = new Perlin();
+      var peak2 = 0.01;
+      var smoothing2 = 10;
+      vertices2 = water.geometry.attributes.position.array;
+      for (var i = 0; i <= vertices2.length; i += 3) {
+          vertices2[i+2] = peak2 * perlin2.noise(
+              vertices2[i]/smoothing2, 
+              vertices2[i+1]/smoothing2
+          );
+      }*/
+
       
-      const waterUniforms = water.material.uniforms;
-      return water;
     }
+
+    function animateWater(){
+      water.geometry.attributes.position.needsUpdate = true;
+      water.geometry.computeVertexNormals();
+      //water.geometry.rotateX(0);
+      //water.geometry.rotateX(Math.PI/2);
+      var temp;
+      if (ti)
+      for (var i = 0; i < vertices2.length; i++) {
+        if (i == 0) {temp = vertices2[i]}
+        if (i+1 != vertices2.length) {
+          vertices2[i] = vertices2[i+1];
+        }
+        else {
+          vertices2[i+1] = temp;
+        } 
+      }
+      water.geometry.attributes.position.needsUpdate = true;
+      water.geometry.computeVertexNormals();
+      //water.geometry.rotateX(Math.PI/2);
+      
+      requestAnimationFrame(animateWater);
+      renderer.render(scene, camera);
+    }
+
+    //animateWater();
 
 
     //LOAD LAMPS
@@ -558,7 +607,7 @@
               positions.push(pos);
               //console.log(pos);
               clone.scale.set(5,5,5);
-              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y-0.2,intersect[0].point.z);
               //clone.rotateY(rot);
               trees.push(clone);
               scene.add(clone);
@@ -575,7 +624,10 @@
     
 
     //spawning things called
-    buildWater();
+    if (watercheck = true) {
+      buildWater();
+    }
+    
     spawnLamps();
     spawnTrees();
     spawnPines();
@@ -635,9 +687,20 @@
     
     var controls = new OrbitControls(camera, renderer.domElement);
 
+    var defwsize = worldSize;
+    var deflamps = lampNumber;
+    var deftrees = treeNumber;
+    var defpines = pineNumber;
+    var defrocks = rockNumber;
     // Final update loop
     var MyUpdateLoop = function () {
       renderer.render(scene, camera);
+
+      if (worldSize != defwsize) {
+        
+      }
+
+
       controls.update();
       requestAnimationFrame(MyUpdateLoop);
     };

@@ -291,18 +291,18 @@
 
     // Animate Stars
     var star_lightness = 0;
-    function animate(){
+    function animateStars(){
       for(let i = 0; i < stars.length; i++){
         let star = stars[i];
         star.rotation.x += 0.01;
         star.rotation.y += 0.01;
       }
       
-      requestAnimationFrame(animate);
+      requestAnimationFrame(animateStars);
       renderer.render(scene, camera);
     }
 
-    animate();
+    animateStars();
 
     var sun;
     var sunMaterial;
@@ -487,14 +487,15 @@
           textureWidth: 512,
           textureHeight: 512,
           waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
-            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            //texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           }),
-          alpha: 1.0,
+          alpha: 0.1,
           sunDirection: new THREE.Vector3(),
           sunColor: 0xffffff,
           waterColor: 0x00d5ff,
           distortionScale: 3.7,
-          fog: scene.fog !== undefined
+          fog: scene.fog !== undefined,
+          reflectivity: 0.5
         }
       );
       waterDefault = water;
@@ -507,12 +508,13 @@
           waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           }),
-          alpha: 1.0,
+          alpha: 0.5,
           sunDirection: new THREE.Vector3(),
           sunColor: 0x000000,
           waterColor: 0x000000,
           distortionScale: 3.7,
           fog: scene.fog !== undefined
+          
         }
       );
 
