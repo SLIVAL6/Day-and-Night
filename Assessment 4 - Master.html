@@ -1086,14 +1086,6 @@
           bloomPass.strength = Number(v);
         },
 
-        // Bloom threshold
-        get 'Bloom Threshold'() {
-          return bloomPass.threshold;
-        },
-        set 'Bloom Threshold'(v) {
-          bloomPass.threshold = Number(v);
-        },
-
         // Bloom radius
         get 'Bloom Radius'() {
           return bloomPass.radius;
@@ -1184,7 +1176,6 @@
 
     folderBloom.add(bloomParams, 'Exposure', 0, 16);
     folderBloom.add(bloomParams, 'Bloom Strength', 0, 20);
-    folderBloom.add(bloomParams, 'Bloom Threshold', 0, 1);
     folderBloom.add(bloomParams, 'Bloom Radius', 0, 1);
 
     folderMoon.add(moonParams, 'Pause Rotation').listen().onChange();
