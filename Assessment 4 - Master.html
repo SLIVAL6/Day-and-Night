@@ -605,15 +605,14 @@
           textureWidth: 512,
           textureHeight: 512,
           waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
-            //texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           }),
-          alpha: 0.1,
+          alpha: 1.0,
           sunDirection: new THREE.Vector3(),
           sunColor: 0xffffff,
           waterColor: 0x00d5ff,
           distortionScale: 3.7,
-          fog: scene.fog !== undefined,
-          reflectivity: 0.5
+          fog: scene.fog !== undefined
         }
       );
       waterDefault = water;
@@ -626,13 +625,12 @@
           waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           }),
-          alpha: 0.5,
+          alpha: 1.0,
           sunDirection: new THREE.Vector3(),
           sunColor: 0x000000,
           waterColor: 0x000000,
           distortionScale: 3.7,
           fog: scene.fog !== undefined
-          
         }
       );
 
