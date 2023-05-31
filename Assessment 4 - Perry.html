@@ -57,16 +57,16 @@
     for (var i = 0; i < 500; i++) {
       if (time % 2 == 0) {
         clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        clouds[i].position.x = Math.random() * randomNumber(-60, 39) - 5;
-        clouds[i].position.y = Math.random() * randomNumber(-58, 35) - 5;
-        clouds[i].position.z = Math.random() * randomNumber(-44, 40) - 5;
+        clouds[i].position.x = Math.random() * randomNumber(-20, 20) - 5;
+        clouds[i].position.y = Math.random() * randomNumber(-20, 20) - 5;
+        clouds[i].position.z = Math.random() * randomNumber(-20, 20) - 5;
         clouds[i].scale.setScalar(Math.random() * 12 + 0.5);
         scene.add(clouds[i]);
       } else {
         clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        clouds[i].position.x = Math.random() * 50 - 5;
-        clouds[i].position.y = Math.random() * 50 - 5;
-        clouds[i].position.z = Math.random() * 50 - 5;
+        cloudMesh.position.x = Math.random() * 10 - 5;
+        cloudMesh.position.y = Math.random() * 10 - 5;
+        cloudMesh.position.z = Math.random() * 10 - 5;
         clouds[i].scale.setScalar(Math.random() * 2 + 0.5);
         scene.add(clouds[i]);
       }
