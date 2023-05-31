@@ -54,21 +54,25 @@
     });
 
     // Create multiple cloud meshes
-    for (var i = 0; i < 500; i++) {
-      if (time % 2 == 0) {
-        clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        clouds[i].position.x = Math.random() * randomNumber(-20, 20) - 5;
-        clouds[i].position.y = Math.random() * randomNumber(-20, 20) - 5;
-        clouds[i].position.z = Math.random() * randomNumber(-20, 20) - 5;
-        clouds[i].scale.setScalar(Math.random() * 12 + 0.5);
-        scene.add(clouds[i]);
-      } else {
-        clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        cloudMesh.position.x = Math.random() * 10 - 5;
-        cloudMesh.position.y = Math.random() * 10 - 5;
-        cloudMesh.position.z = Math.random() * 10 - 5;
-        clouds[i].scale.setScalar(Math.random() * 2 + 0.5);
-        scene.add(clouds[i]);
+    for (var j = 0; j < 5; j++) {
+      for (var i = 0; i < 500; i++) {
+        if (time % 2 == 0) {
+          var random = randomNumber(-13, 7);
+          clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          clouds[i].position.x = Math.random() * randomNumber(-152, 112) + j * random / 5;
+          clouds[i].position.y = Math.random() * randomNumber(-123, 17) + j * random / 2;
+          clouds[i].position.z = Math.random() * randomNumber(-164, 120) + j * random;
+          clouds[i].scale.setScalar(Math.random() * 12 + 0.5);
+          scene.add(clouds[i]);
+        } else {
+          var random = randomNumber(-7, 27);
+          clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          clouds[i].position.x = Math.random() * 10 + j * random / 5;
+          clouds[i].position.y = Math.random() * 10 + j * random / 2;
+          clouds[i].position.z = Math.random() * 10 + j * random;
+          clouds[i].scale.setScalar(Math.random() * 2 + 0.5);
+          scene.add(clouds[i]);
+        }
       }
     }
 
@@ -76,24 +80,7 @@
     function animate() {
       time++;
 
-      if (time >= 720) {
-        if (time % 1000 == 0) {
-          for (var i = 0; i < 500; i++) {
-            clouds[i].scale.setScalar(clouds[i].scale * 0.5);
-            scene.add(clouds[i]);
-          }
-        }
-      }
-
       requestAnimationFrame(animate);
-
-      // Rotate the clouds
-      scene.traverse(function (object) {
-        if (object instanceof THREE.Mesh) {
-          object.rotation.x += 0.005;
-          object.rotation.y += 0.005;
-        }
-      });
 
       // Render the scene
       renderer.render(scene, camera);
