@@ -166,13 +166,13 @@
     const sunLight = new THREE.PointLight( { color: 'white' } );
     sunLight.intensity = 1
     sunLight.castShadow = true;
-    sunLight.position.x = 40;
+    sunLight.position.x = 50;
     sunLight.position.y = 0;
     sunLight.position.z = 0;
 
     const directionalLight = new THREE.DirectionalLight( { color: 'white' });
     directionalLight.castShadow = false;
-    directionalLight.position.x = 40;
+    directionalLight.position.x = 50;
     directionalLight.position.y = 0;
     directionalLight.position.z = 0;
 
@@ -232,10 +232,15 @@
     var def = 50;
     var w = 100;
 
+    // Clouds
+    var clouds = [];
+    var cloudsSpawned = false;
+    var cloudAmount = 250;
+
     // Creates Scene
     var point;
     function CreateScene() {
-      // Createss objects
+      // Createss sun and moon
       CreateSun();
       CreateMoon();
       CreateLensflare();
@@ -252,7 +257,7 @@
       sunLight.add(lensflare);
       sunLight.lookAt = point;
 
-      // Adds terrain
+      // Adds environment
       CreateTerrain();
       BuildWater();
       SpawnLamps();
@@ -261,14 +266,71 @@
       SpawnRocks();
       SpawnGrass();
 
+      // Adds clouds
+      CreateClouds();
+
       // Adds lighting
       scene.add(ambientLight);
     }
 
     CreateScene();
 
+    // Create clouds
+    var cloudGeometry;
+    var cloudMaterial;
+    function CreateClouds() {
+      // Create cloud geometry
+      cloudGeometry = new THREE.SphereGeometry(1, 100, 100);
+
+      // Create cloud material
+      cloudMaterial = new THREE.MeshPhongMaterial({
+        color: 0x878787,
+        opacity: 1,
+        transparent: true,
+        depthWrite: false
+      });
+
+      for (var i = 0; i < Math.floor(cloudAmount); i++) {
+        clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        RandomCloudPosition(clouds[i]);
+        clouds[i].scale.setScalar(Math.random() * 2 + 0.5);
+      }
+    }
+
+    // Randomises cloud position
+    function RandomCloudPosition(obj) {
+      obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 50;
+      obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+    }
+
+    // Returns a random number, used for cloud generation
+    function RandomNumber(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // Processes spawning/despawning
+    function ProcessClouds() {
+      // Despawns clouds
+      if (time >= 720 && cloudsSpawned) {
+        for (var i = 0; i < clouds.length; i++) {
+          scene.remove(clouds[i]);
+        }
+        cloudsSpawned = false;
+      }
+      // Spawns clouds
+      else if (time < 720 && !cloudsSpawned) {
+        for (var i = 0; i < Math.floor(cloudAmount); i++) {
+          clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          RandomCloudPosition(clouds[i]);
+          scene.add(clouds[i]);
+        }
+        cloudsSpawned = true;
+      }
+    }
+
     // Random Star Location Generator
-    function randomLocation(){
+    function StarLocation(){
         var num = Math.floor(Math.random() * 50) + 1; 
         num *= Math.floor(Math.random() * 2) == 1 ? 1 : -1;
         return num;
@@ -281,7 +343,7 @@
       let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
       let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
       let star = new THREE.Mesh(star_geometry, star_material);
-      star.position.set(randomLocation(), randomLocation() + 75, randomLocation());
+      star.position.set(StarLocation(), StarLocation() + 75, StarLocation());
       stars.push(star);
     }
 
@@ -326,7 +388,7 @@
       sun.receiveShadow = false;
 
       // Sets position for the Sun
-      sun.position.x = 40;
+      sun.position.x = 50;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -358,7 +420,7 @@
       moon.receiveShadow = false;
 
       // Sets position for the Moon
-      moon.position.x = -40;
+      moon.position.x = -50;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -410,9 +472,6 @@
       terrain.geometry.attributes.position.needsUpdate = true;
       terrain.geometry.computeVertexNormals();
       terrain.geometry.rotateX(Math.PI/2);
-
-      console.log("max: " + max);
-      console.log("lowest: " + lowest);
 
       var dif = max-lowest;
       waterHeight = lowest+(dif/2);
@@ -852,7 +911,7 @@
             object.children[i].material.color = new THREE.Color(0.8,0.8,0.8);
           }
 
-          materials.materials.Material.color.setHSL(0, 0, 0.5);
+          materials.materials.Material.color.setHSL(0, 0, 0.4);
 
           // Cast and receive shadows
           object.traverse(function(node) {
@@ -1035,6 +1094,17 @@
         set 'Number of Rocks'(v) {
           rockNumber = v;
         }
+      },
+
+      folderClouds = gui.addFolder('Clouds'),
+      cloudParams = {
+        // Number of clouds
+        get 'Number of Clouds'() {
+          return cloudAmount;
+        },
+        set 'Number of Clouds'(v) {
+          cloudAmount = v;
+        }
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -1055,6 +1125,8 @@
     folderWorldGeneration.add(wgParams, 'Number of Lamps', 0, 10).listen().onChange();
     folderWorldGeneration.add(wgParams, 'Number of Rocks', 0, 50).listen().onChange();
 
+    folderClouds.add(cloudParams, 'Number of Clouds', 0, 500).step(1);
+
     // Update loop
     var MyUpdateLoop = function () {
       controls.update();
@@ -1063,6 +1135,9 @@
       ProcessTime();
       MoonPhases();
       SunMoonRotation();
+
+      // Animates clouds
+      ProcessClouds();
       
       // Objects unaffected by bloom
       terrain.material = darkMaterial;
