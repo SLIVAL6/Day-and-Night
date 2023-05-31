@@ -100,8 +100,8 @@
 
     // Camera setup
     var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-    camera.position.set(0, 5, 15);
-    camera.lookAt(0, 0, 1);
+    camera.position.set(100, 80, 100);
+    camera.lookAt(0, 20, 0);
 
     THREE.ColorManagement.legacyMode = false
 
@@ -162,17 +162,20 @@
     const ambientLight = new THREE.AmbientLight(0x404040);
     ambientLight.intensity = 1;
 
+    // Sun and moon position
+    var sunMoonPos = 55;
+
     // Light from the sun
     const sunLight = new THREE.PointLight( { color: 'white' } );
     sunLight.intensity = 1
     sunLight.castShadow = true;
-    sunLight.position.x = 50;
+    sunLight.position.x = sunMoonPos;
     sunLight.position.y = 0;
     sunLight.position.z = 0;
 
     const directionalLight = new THREE.DirectionalLight( { color: 'white' });
     directionalLight.castShadow = false;
-    directionalLight.position.x = 50;
+    directionalLight.position.x = sunMoonPos;
     directionalLight.position.y = 0;
     directionalLight.position.z = 0;
 
@@ -232,6 +235,18 @@
     var def = 50;
     var w = 100;
 
+    // Stars
+    var stars = [];
+    var starsSpawned = false;
+    var starAmount = 250;
+
+    // Sky
+    var sky;
+    var skyMaterial;
+    var skyDayColor = new THREE.Color(0x87ceeb);
+    var skyNightColor = new THREE.Color(0x000000);
+    var skyChanged = false;
+
     // Clouds
     var clouds = [];
     var cloudsSpawned = false;
@@ -256,6 +271,12 @@
 
       sunLight.add(lensflare);
       sunLight.lookAt = point;
+
+      // Adds skybox
+      CreateSky();
+
+      // Adds stars
+      CreateStars();
 
       // Adds environment
       CreateTerrain();
@@ -290,6 +311,7 @@
         depthWrite: false
       });
 
+      // Adds clouds to the cloud array
       for (var i = 0; i < Math.floor(cloudAmount); i++) {
         clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
         RandomCloudPosition(clouds[i]);
@@ -300,7 +322,7 @@
     // Randomises cloud position
     function RandomCloudPosition(obj) {
       obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
-      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 50;
+      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 45;
       obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
     }
 
@@ -329,42 +351,79 @@
       }
     }
 
-    // Random Star Location Generator
-    function StarLocation(){
-        var num = Math.floor(Math.random() * 50) + 1; 
-        num *= Math.floor(Math.random() * 2) == 1 ? 1 : -1;
-        return num;
+    // Create sky
+    function CreateSky() {
+      skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide, color: skyDayColor});
+      skyMaterial.toneMapped = false;
+      sky = new THREE.Mesh(new THREE.SphereGeometry(500), skyMaterial);
+			scene.add(sky);
+    }
+
+    // Updates sky color
+    function ChangeSkyColor() {
+      // Night
+      if (time >= 720 && skyChanged) {
+        skyMaterial.color = skyNightColor;
+        skyChanged = false;
+      }
+      // Day
+      else if (time < 720 && !skyChanged) {
+        skyMaterial.color = skyDayColor;
+        skyChanged = true;
+      }
     }
 
     // Star Generation
-    var stars = [];
+    var starGeometry;
+    var starMaterial;
+    function CreateStars() {
+      // Create star geometry
+      starGeometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
 
-    for(let i = 0; i < 200; i++){
-      let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
-      let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
-      let star = new THREE.Mesh(star_geometry, star_material);
-      star.position.set(StarLocation(), StarLocation() + 75, StarLocation());
-      stars.push(star);
+      // Create star material
+      starMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+
+      // Adds stars to the star array
+      for(let i = 0; i < Math.floor(starAmount); i++){
+        stars[i] = new THREE.Mesh(starGeometry, starMaterial);
+        RandomStarPosition(stars[i]);
+      }
     }
 
-    for(let i = 0; i < stars.length; i++){
-      scene.add(stars[i]);
+    // Random Star Location Generator
+    function RandomStarPosition(obj) {
+      obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+      obj.position.y = RandomNumber(-worldSize * 0.4, worldSize * 0.1) + 75;
+      obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+    }
+
+    // Process spawning/despawning stars
+    function ProcessStars() {
+      // Day
+      if (time < 720 && starsSpawned) {
+        for (var i = 0; i < stars.length; i++) {
+          scene.remove(stars[i]);
+        }
+        starsSpawned = false;
+      }
+      // Night
+      else if (time >= 720 && !starsSpawned) {
+        for (var i = 0; i < Math.floor(starAmount); i++) {
+          stars[i] = new THREE.Mesh(starGeometry, starMaterial);
+          RandomStarPosition(stars[i]);
+          scene.add(stars[i]);
+        }
+        starsSpawned = true;
+      }
     }
 
     // Animate Stars
-    var star_lightness = 0;
-    function animate(){
+    function AnimateStars() {
       for(let i = 0; i < stars.length; i++){
-        let star = stars[i];
-        star.rotation.x += 0.01;
-        star.rotation.y += 0.01;
+        stars[i].rotation.x += 0.01;
+        stars[i].rotation.y += 0.01;
       }
-      
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
     }
-
-    animate();
 
     var sun;
     var sunMaterial;
@@ -388,7 +447,7 @@
       sun.receiveShadow = false;
 
       // Sets position for the Sun
-      sun.position.x = 50;
+      sun.position.x = sunMoonPos;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -420,7 +479,7 @@
       moon.receiveShadow = false;
 
       // Sets position for the Moon
-      moon.position.x = -50;
+      moon.position.x = -sunMoonPos;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -965,6 +1024,8 @@
 
     // Controls
     var controls = new OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 50;
+    controls.maxDistance = 300;
 
     // GUI
     const gui = new GUI(),
@@ -1105,6 +1166,17 @@
         set 'Number of Clouds'(v) {
           cloudAmount = v;
         }
+      },
+
+      folderStars = gui.addFolder('Stars'),
+      starParams = {
+        // Number of stars
+        get 'Number of Stars'() {
+          return starAmount;
+        },
+        set 'Number of Stars'(v) {
+          starAmount = v;
+        }
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -1127,6 +1199,8 @@
 
     folderClouds.add(cloudParams, 'Number of Clouds', 0, 500).step(1);
 
+    folderStars.add(starParams, 'Number of Stars', 0, 500).step(1);
+
     // Update loop
     var MyUpdateLoop = function () {
       controls.update();
@@ -1138,6 +1212,13 @@
 
       // Animates clouds
       ProcessClouds();
+
+      // Animates stars
+      AnimateStars();
+      ProcessStars();
+
+      // Updates color of sky
+      ChangeSkyColor();
       
       // Objects unaffected by bloom
       terrain.material = darkMaterial;

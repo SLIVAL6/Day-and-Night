@@ -116,7 +116,7 @@
     const layers = 3;
     const params = {
       exposure: 1,
-      bloomStrength: 3,
+      bloomStrength: 0,
       bloomThreshold: 0,
       bloomRadius: 0
     };
@@ -336,15 +336,18 @@
       moon.rotation.z = 0;
     }
 
-     //Sky
-    function CreateSky(color){
-				const sky = new THREE.Mesh(
-					new THREE.SphereGeometry( 50 ),
-					new THREE.MeshBasicMaterial( {  side: THREE.BackSide, color } )
-				);
-				scene.add( sky );
+    //Sky
+    var sky;
+    var skyMaterial;
+    var skyDayColor = new THREE.Color(0x87ceeb);
+    var skyNightColor = new THREE.Color(0x000000);
+    function CreateSky()
+    {
+      skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide, color: skyDayColor});
+      sky = new THREE.Mesh(new THREE.SphereGeometry(500), skyMaterial);
+			scene.add(sky);
     }
-    CreateSky(0x87ceeb);
+    CreateSky();
      
     var plane;
     var planeMaterial;
@@ -400,13 +403,13 @@
     // Changes the colour of the Sky
     function UpdateSkyColor(){
       if(1440 > time >= 720){
-        CreateSky(0x000000); //night
+        skyMaterial.color = skyNightColor; //night
       }
       else if(0 <= time < 720) {
-        CreateSky(0x87ceeb); //day
+        skyMaterial.color = skyDayColor; //day
       }
     }
-    UpdateSkyColor();
+    // UpdateSkyColor();
 
     // Rotation of the Sun and Moon around world point (0, 0, 0)
     function SunMoonRotation() {
@@ -572,6 +575,8 @@
       moon.material = moonMaterial;
       cube.material = planeMaterial; // testing
       finalComposer.render();
+
+      UpdateSkyColor();
 
       requestAnimationFrame(MyUpdateLoop);
     };
