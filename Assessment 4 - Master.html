@@ -250,7 +250,9 @@
     // Clouds
     var clouds = [];
     var cloudsSpawned = false;
-    var cloudAmount = 250;
+    var cloudAmount = 10;
+    var cloudDensity = 20;
+    var cloudSize = 5;
 
     // Creates Scene
     var point;
@@ -287,9 +289,6 @@
       SpawnRocks();
       SpawnGrass();
 
-      // Adds clouds
-      CreateClouds();
-
       // Adds lighting
       scene.add(ambientLight);
     }
@@ -299,31 +298,45 @@
     // Create clouds
     var cloudGeometry;
     var cloudMaterial;
+    var cloudOpacity = 0.8;
     function CreateClouds() {
       // Create cloud geometry
       cloudGeometry = new THREE.SphereGeometry(1, 100, 100);
 
       // Create cloud material
-      cloudMaterial = new THREE.MeshPhongMaterial({
+      cloudMaterial = new THREE.MeshBasicMaterial({
         color: 0x878787,
-        opacity: 1,
+        opacity: cloudOpacity,
         transparent: true,
         depthWrite: false
       });
 
       // Adds clouds to the cloud array
       for (var i = 0; i < Math.floor(cloudAmount); i++) {
-        clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        clouds[i] = new THREE.Group();
         RandomCloudPosition(clouds[i]);
-        clouds[i].scale.setScalar(Math.random() * 2 + 0.5);
+        for (var j = 0; j < Math.floor(cloudDensity); j++) {
+          var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          RandomCloudDensity(cloud, clouds[i]);
+          cloud.scale.setScalar(Math.random() * 2 + 0.5);
+          clouds[i].add(cloud);
+        }
+        scene.add(clouds[i]);
       }
     }
 
-    // Randomises cloud position
+    // Randomises position of cloud points
     function RandomCloudPosition(obj) {
       obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
       obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 45;
       obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+    }
+
+    // Randomises position of cloud spheres around a cloud point
+    function RandomCloudDensity(obj, point) {
+      obj.position.x = RandomNumber(-cloudSize, cloudSize) + point.position.x;
+      obj.position.y = RandomNumber(-cloudSize * 0.5, cloudSize * 0.5) + point.position.y;
+      obj.position.z = RandomNumber(-cloudSize, cloudSize) + point.position.z;
     }
 
     // Returns a random number, used for cloud generation
@@ -342,11 +355,7 @@
       }
       // Spawns clouds
       else if (time < 720 && !cloudsSpawned) {
-        for (var i = 0; i < Math.floor(cloudAmount); i++) {
-          clouds[i] = new THREE.Mesh(cloudGeometry, cloudMaterial);
-          RandomCloudPosition(clouds[i]);
-          scene.add(clouds[i]);
-        }
+        CreateClouds();
         cloudsSpawned = true;
       }
     }
@@ -1122,41 +1131,6 @@
         }
       },
 
-      folderWorldGeneration = gui.addFolder('WorldGeneration'),
-      wgParams = {
-        // choose world size
-        get 'World Size'() {
-          return worldSize;
-        },
-        set 'World Size'(v) {
-          worldSize = v;
-        },
-
-        // Set number of normal trees
-        get 'Number of Trees'() {
-          return treeNumber;
-        },
-        set 'Number of Trees'(v) {
-          treeNumber = v;
-        },
-
-        // Set number of lamps
-        get 'Number of Lamps'() {
-          return lampNumber;
-        },
-        set 'Number of Lamps'(v) {
-          lampNumber = v;
-        },
-
-        // Set number of rocks
-        get 'Number of Rocks'() {
-          return rockNumber;
-        },
-        set 'Number of Rocks'(v) {
-          rockNumber = v;
-        }
-      },
-
       folderClouds = gui.addFolder('Clouds'),
       cloudParams = {
         // Number of clouds
@@ -1165,6 +1139,31 @@
         },
         set 'Number of Clouds'(v) {
           cloudAmount = v;
+        },
+        
+        // Cloud density
+        get 'Density'() {
+          return cloudDensity;
+        },
+        set 'Density'(v) {
+          cloudDensity = v;
+        },
+
+        // Cloud size
+        get 'Size'() {
+          return cloudSize;
+        },
+        set 'Size'(v) {
+          cloudSize = v;
+        },
+
+        // Cloud opacity
+        get 'Opacity'() {
+          return cloudOpacity;
+        },
+        set 'Opacity'(v) {
+          cloudOpacity = v;
+          cloudMaterial.opacity = cloudOpacity;
         }
       },
 
@@ -1192,12 +1191,10 @@
     folderMoon.add(moonParams, 'Moon Phase', 0, 360).listen().onChange();
     folderMoon.add(moonParams, 'Phase Speed', 0.1, 10);
 
-    folderWorldGeneration.add(wgParams, 'World Size', 50, 100);
-    folderWorldGeneration.add(wgParams, 'Number of Trees', 0, 100).listen().onChange();
-    folderWorldGeneration.add(wgParams, 'Number of Lamps', 0, 10).listen().onChange();
-    folderWorldGeneration.add(wgParams, 'Number of Rocks', 0, 50).listen().onChange();
-
-    folderClouds.add(cloudParams, 'Number of Clouds', 0, 500).step(1);
+    folderClouds.add(cloudParams, 'Number of Clouds', 0, 50).step(1);
+    folderClouds.add(cloudParams, 'Density', 0, 50).step(1);
+    folderClouds.add(cloudParams, 'Size', 5, 15).step(1);
+    folderClouds.add(cloudParams, 'Opacity', 0, 1);
 
     folderStars.add(starParams, 'Number of Stars', 0, 500).step(1);
 
