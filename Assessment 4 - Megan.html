@@ -37,8 +37,7 @@
 
   <div id = "info">
     <p>
-      Computer Graphics - Assessment 4<br>
-      Megan<br>
+      Computer Graphics - Assessment 4
     </p>
   </div>
 
@@ -87,7 +86,12 @@
     import { ShaderPass } from './build/ShaderPass.js';
     import { UnrealBloomPass } from './build/UnrealBloomPass.js';
     import { Lensflare, LensflareElement } from './build/Lensflare.js';
+    import { Perlin } from './build/perlin.js';
+    import { OBJLoader } from './build/loaders/OBJLoader.js';
+    import { MTLLoader } from './build/loaders/MTLLoader.js';
+    import { Water } from './build/Water.js';
     import { Sky } from './build/Sky.js';
+    import { Reflector } from './build/Reflector.js';
 
     // Create scene
     var scene = new THREE.Scene();
@@ -96,17 +100,19 @@
 
     // Camera setup
     var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-    camera.position.set(0, 5, 15);
-    camera.lookAt(0, 0, 1);
+    camera.position.set(100, 80, 100);
+    camera.lookAt(0, 20, 0);
+
+    THREE.ColorManagement.legacyMode = false
 
     // Renderer setup
     var renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputEncoding = THREE.sRGBEncoding;
     document.body.appendChild(renderer.domElement);
 
     // Render Pass
@@ -116,8 +122,8 @@
     const layers = 3;
     const params = {
       exposure: 1,
-      bloomStrength: 0,
-      bloomThreshold: 0,
+      bloomStrength: 10,
+      bloomThreshold: 0.85,
       bloomRadius: 0
     };
 
@@ -156,13 +162,22 @@
     const ambientLight = new THREE.AmbientLight(0x404040);
     ambientLight.intensity = 1;
 
-    // Directional light from the sun
-    const sunLight = new THREE.DirectionalLight( { color: 'white' } );
+    // Sun and moon position
+    var sunMoonPos = 55;
+
+    // Light from the sun
+    const sunLight = new THREE.PointLight( { color: 'white' } );
     sunLight.intensity = 1
     sunLight.castShadow = true;
-    sunLight.position.x = 40;
+    sunLight.position.x = sunMoonPos;
     sunLight.position.y = 0;
     sunLight.position.z = 0;
+
+    const directionalLight = new THREE.DirectionalLight( { color: 'white' });
+    directionalLight.castShadow = false;
+    directionalLight.position.x = sunMoonPos;
+    directionalLight.position.y = 0;
+    directionalLight.position.z = 0;
 
     // Material used for bloom processing
     const darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
@@ -199,91 +214,248 @@
     var subFrames = 10;
     var currFrame = 0;
 
+    // Environment generation variables
+    var vertices = [];
+    var v2 = [];
+    var positions = [];
+    var treePositions = [];
+    var lampPositions = [];
+    var pinePositions = [];
+    var rockPositions = [];
+    var worldSize = 100;
+    var lampNumber = 2;
+    var treeNumber = 20;
+    var pineNumber = 50;
+    var grassNumber = 500;
+    var rockNumber = 50;
+    var trees = [];
+    var waterHeight = -3.5;
+    var faces = [];
+    var reload = false;
+    var def = 50;
+    var w = 100;
+
+    // Stars
+    var stars = [];
+    var starsSpawned = false;
+    var starAmount = 250;
+
+    // Sky
+    var sky;
+    var skyMaterial;
+    var skyDayColor = new THREE.Color(0x5EABCA);
+    var skyNightColor = new THREE.Color(0x000000);
+    var skyDuskColor = new THREE.Color(0x345E6F);
+    var skyDawnColor = new THREE.Color(0x345E6F);
+    var skyChanged = false;
+
+    // Clouds
+    var clouds = [];
+    var cloudsSpawned = false;
+    var cloudAmount = 10;
+    var cloudDensity = 20;
+    var cloudSize = 5;
+
     // Creates Scene
     var point;
-    var cube; // testing
     function CreateScene() {
-      // Createss objects
+      // Createss sun and moon
       CreateSun();
       CreateMoon();
       CreateLensflare();
-      CreateStars();
       
       // Attaches the sun and moon to world point (0, 0, 0)
       point = new THREE.Group();
       point.add(sun);
       point.add(moon);
       point.add(sunLight);
+      point.add(directionalLight);
       scene.add(point);
       point.rotation.z = Math.PI;
 
       sunLight.add(lensflare);
       sunLight.lookAt = point;
 
-      // Adds a plane
-      CreatePlane();
-      scene.add(plane);
+      // Adds skybox
+      CreateSky();
+
+      // Adds stars
+      CreateStars();
+
+      // Adds environment
+      CreateTerrain();
+      BuildWater();
+      SpawnLamps();
+      SpawnTrees();
+      SpawnPines();
+      SpawnRocks();
+      SpawnGrass();
 
       // Adds lighting
       scene.add(ambientLight);
-
-      // Adds cube for light testing
-      cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), darkMaterial);
-      cube.position.x = 0;
-      cube.position.y = 10;
-      cube.position.z = 0;
-      cube.castShadow = true;
-      cube.receiveShadow = true;
-      scene.add(cube);
     }
 
-    // Random Star Location Generator
-    function randomLocation(){
-        var num = Math.floor(Math.random() * 50) + 1; 
-        num *= Math.floor(Math.random() * 2) == 1 ? 1 : -1;
-        return num;
+    CreateScene();
+
+    // Create clouds
+    var cloudGeometry;
+    var cloudMaterial;
+    var cloudOpacity = 0.8;
+    function CreateClouds() {
+      // Create cloud geometry
+      cloudGeometry = new THREE.SphereGeometry(1, 100, 100);
+
+      // Create cloud material
+      cloudMaterial = new THREE.MeshBasicMaterial({
+        color: 0x878787,
+        opacity: cloudOpacity,
+        transparent: true,
+        depthWrite: false
+      });
+
+      // Adds clouds to the cloud array
+      for (var i = 0; i < Math.floor(cloudAmount); i++) {
+        clouds[i] = new THREE.Group();
+        RandomCloudPosition(clouds[i]);
+        for (var j = 0; j < Math.floor(cloudDensity); j++) {
+          var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          RandomCloudDensity(cloud, clouds[i]);
+          cloud.scale.setScalar(Math.random() * 2 + 0.5);
+          clouds[i].add(cloud);
+        }
+        scene.add(clouds[i]);
+      }
+    }
+
+    // Randomises position of cloud points
+    function RandomCloudPosition(obj) {
+      obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 45;
+      obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+    }
+
+    // Randomises position of cloud spheres around a cloud point
+    function RandomCloudDensity(obj, point) {
+      obj.position.x = RandomNumber(-cloudSize, cloudSize) + point.position.x;
+      obj.position.y = RandomNumber(-cloudSize * 0.5, cloudSize * 0.5) + point.position.y;
+      obj.position.z = RandomNumber(-cloudSize, cloudSize) + point.position.z;
+    }
+
+    // Returns a random number, used for cloud generation
+    function RandomNumber(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // Processes spawning/despawning
+    function ProcessClouds() {
+      // Despawns clouds
+      if (time >= 720 && cloudsSpawned) {
+        for (var i = 0; i < clouds.length; i++) {
+          scene.remove(clouds[i]);
+        }
+        cloudsSpawned = false;
+      }
+      // Spawns clouds
+      else if (time < 720 && !cloudsSpawned) {
+        CreateClouds();
+        cloudsSpawned = true;
+      }
+    }
+
+    // Create sky
+    function CreateSky() {
+      skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide, color: skyDayColor});
+      skyMaterial.toneMapped = false;
+      sky = new THREE.Mesh(new THREE.SphereGeometry(500), skyMaterial);
+			scene.add(sky);
+    }
+
+    // Updates sky color
+    function ChangeSkyColor() {
+      // Dawn
+      if (time <= 150 && !skyChanged){
+        skyMaterial.color = skyDawnColor;
+        skyChanged = true;
+      }
+      // Day
+      else if (150 < time <= 520 && skyChanged){
+        skyMaterial.color = skyDayColor;
+        skyChanged = false;
+      }
+      // Dusk
+      else if (520 < time <= 720 && !skyChanged){
+        skyMaterial.color = skyDuskColor;
+        skyChanged = true;
+      }
+      // Night
+      else if (720 < time && skyChanged){
+        skyMaterial.color = skyNightColor;
+        skyChanged = false;
+      }
     }
 
     // Star Generation
-    var stars = [];
-    function CreateStars(){
-      for(let i = 0; i < 200; i++){
-      let star_geometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
-      let star_material = new THREE.MeshBasicMaterial({color: 0xffffff});
-      let star = new THREE.Mesh(star_geometry, star_material);
-      star.position.set(randomLocation(), randomLocation() + 75, randomLocation());
-      stars.push(star);
-      }
+    var starGeometry;
+    var starMaterial;
+    function CreateStars() {
+      // Create star geometry
+      starGeometry = new THREE.BoxGeometry(0.07, 0.07, 0.07);
 
-     for(let i = 0; i < stars.length; i++){
-      scene.add(stars[i]);
+      // Create star material
+      starMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+
+      // Adds stars to the star array
+      for(let i = 0; i < Math.floor(starAmount); i++){
+        stars[i] = new THREE.Mesh(starGeometry, starMaterial);
+        RandomStarPosition(stars[i]);
+      }
+    }
+
+    // Random Star Location Generator
+    function RandomStarPosition(obj) {
+      obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+      obj.position.y = RandomNumber(-worldSize * 0.4, worldSize * 0.1) + 75;
+      obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+    }
+
+    // Process spawning/despawning stars
+    function ProcessStars() {
+      // Day
+      if (time < 720 && starsSpawned) {
+        for (var i = 0; i < stars.length; i++) {
+          scene.remove(stars[i]);
+        }
+        starsSpawned = false;
+      }
+      // Night
+      else if (time >= 720 && !starsSpawned) {
+        for (var i = 0; i < Math.floor(starAmount); i++) {
+          stars[i] = new THREE.Mesh(starGeometry, starMaterial);
+          RandomStarPosition(stars[i]);
+          scene.add(stars[i]);
+        }
+        starsSpawned = true;
       }
     }
 
     // Animate Stars
-    var star_lightness = 0;
-    function animate(){
+    function AnimateStars() {
       for(let i = 0; i < stars.length; i++){
-        let star = stars[i];
-        star.rotation.x += 0.01;
-        star.rotation.y += 0.01;
+        stars[i].rotation.x += 0.01;
+        stars[i].rotation.y += 0.01;
       }
-      
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
     }
-
-    animate();
-
-    CreateScene();
 
     var sun;
     var sunMaterial;
     function CreateSun() {
       // Material for the Sun
-      sunMaterial = new THREE.MeshLambertMaterial();
+      sunMaterial = new THREE.MeshBasicMaterial();
       sunMaterial.color.setHSL(0.152, 0.95, 0.57);
+      //sunMaterial.color.setRGB(20,20,20);
       sunMaterial.wireframe = false;
+      sunMaterial.toneMapped = false;
+      sunMaterial.emissiveIntensity = 10;
 
       // Sphere geometry for the Sun
       var sunGeometry = new THREE.SphereGeometry(2, 15, 15);
@@ -296,7 +468,7 @@
       sun.receiveShadow = false;
 
       // Sets position for the Sun
-      sun.position.x = 40;
+      sun.position.x = sunMoonPos;
       sun.position.y = 0;
       sun.position.z = 0;
 
@@ -313,6 +485,8 @@
       moonMaterial = new THREE.MeshLambertMaterial();
       moonMaterial.color.setHSL(0, 0, 0.8);
       moonMaterial.wireframe = false;
+      moonMaterial.toneMapped = false;
+      moonMaterial.emissiveIntensity = 10;
       moonMaterial.map = textureMoon;
 
       // Sphere geometry for the Moon
@@ -326,7 +500,7 @@
       moon.receiveShadow = false;
 
       // Sets position for the Moon
-      moon.position.x = -40;
+      moon.position.x = -sunMoonPos;
       moon.position.y = 0;
       moon.position.z = 0;
 
@@ -336,46 +510,51 @@
       moon.rotation.z = 0;
     }
 
-    //Sky
-    var sky;
-    var skyMaterial;
-    var skyDayColor = new THREE.Color(0x87ceeb);
-    var skyNightColor = new THREE.Color(0x000000);
-    function CreateSky()
-    {
-      skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide, color: skyDayColor});
-      sky = new THREE.Mesh(new THREE.SphereGeometry(500), skyMaterial);
-			scene.add(sky);
-    }
-    CreateSky();
-     
-    var plane;
-    var planeMaterial;
-    function CreatePlane() {
-      // Material for the plane
-      planeMaterial = new THREE.MeshLambertMaterial();
-      planeMaterial.color.setHSL(0, 0, 0.8);
-      planeMaterial.wireframe = false;
+    var terrain;
+    var terrainMaterial;
+    var perlin;
+    var peak;
+    var smoothing;
+    function CreateTerrain() {
+      // Creates the terrain Plane
+      var terrainGeometry = new THREE.BoxGeometry(worldSize, worldSize, 256, 256);
+      terrainMaterial = new THREE.MeshLambertMaterial();
+      terrainMaterial.vertexColors = THREE.VertexColors;
+      terrainMaterial.color = new THREE.Color(0.694, 1, 0.431);
+      terrainMaterial.side = THREE.DoubleSide;
+      
+      terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
+      terrain.castShadow = false;
+      terrain.receiveShadow = true;
 
-      // Plane geometry
-      var planeGeometry = new THREE.PlaneGeometry(50, 50, 50, 50);
+      scene.add(terrain);
 
-      // Generates plane
-      plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      //Adds noise to terrain
+      perlin = new Perlin();
+      peak = 12;
+      smoothing = 100;
+      var max = 0;
+      var lowest = 0;
+      vertices = terrain.geometry.attributes.position.array;
+      for (var i = 0; i <= vertices.length; i += 3) {
+          vertices[i+2] = peak * perlin.noise(
+              vertices[i]/smoothing, 
+              vertices[i+1]/smoothing
+          );
+          if (vertices[i] > max){
+            max = vertices[i];
+          }
+          if (vertices[i] < lowest) {
+            lowest = vertices[i];
+          }
+      }
 
-      // Shadow properties
-      plane.castShadow = false;
-      plane.receiveShadow = true;
+      terrain.geometry.attributes.position.needsUpdate = true;
+      terrain.geometry.computeVertexNormals();
+      terrain.geometry.rotateX(Math.PI/2);
 
-      // Sets position for the plane
-      plane.position.x = 0;
-      plane.position.y = 0;
-      plane.position.z = 0;
-
-      // Sets rotation for the plane
-      plane.rotation.x = - Math.PI / 2;
-      plane.rotation.y = 0;
-      plane.rotation.z = 0;
+      var dif = max-lowest;
+      waterHeight = lowest+(dif/2);
     }
 
     const maxTime = 1440; // Amount of minutes in a day (24 hrs * 60 mins)
@@ -399,17 +578,6 @@
       // Sets current time
       currentTime = time / maxTime;
     }
-
-    // Changes the colour of the Sky
-    function UpdateSkyColor(){
-      if(1440 > time >= 720){
-        skyMaterial.color = skyNightColor; //night
-      }
-      else if(0 <= time < 720) {
-        skyMaterial.color = skyDayColor; //day
-      }
-    }
-    // UpdateSkyColor();
 
     // Rotation of the Sun and Moon around world point (0, 0, 0)
     function SunMoonRotation() {
@@ -446,8 +614,439 @@
       moon.rotation.y = Math.PI * 2 * moonPhase;
     }
 
+    // Water plane
+    var water;
+    var waterDefault;
+    var waterDark;
+    function BuildWater() {
+      const waterGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
+      water = new Water(
+        waterGeometry,
+        {
+          textureWidth: 512,
+          textureHeight: 512,
+          waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+          }),
+          alpha: 1.0,
+          sunDirection: new THREE.Vector3(),
+          sunColor: 0xffffff,
+          waterColor: 0x00d5ff,
+          distortionScale: 3.7,
+          fog: scene.fog !== undefined
+        }
+      );
+      waterDefault = water;
+
+      waterDark = new Water(
+        waterGeometry,
+        {
+          textureWidth: 512,
+          textureHeight: 512,
+          waterNormals: new THREE.TextureLoader().load('models/textures/waternormals.jpeg', function ( texture ) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+          }),
+          alpha: 1.0,
+          sunDirection: new THREE.Vector3(),
+          sunColor: 0x000000,
+          waterColor: 0x000000,
+          distortionScale: 3.7,
+          fog: scene.fog !== undefined
+        }
+      );
+
+      water.rotation.x =- Math.PI / 2;
+      water.position.y = waterHeight;
+      scene.add(water);
+      
+      const waterUniforms = water.material.uniforms;
+    }
+
+    // LOAD LAMPS
+    function SpawnLamps() {
+      var mtlloader=new MTLLoader();
+      mtlloader.setPath( '../models/' )
+      mtlloader.load( 'streetLamp.mtl', function ( materials ) 
+      {
+        materials.preload();
+        var objload=new OBJLoader();
+        objload.setMaterials( materials )
+        objload.setPath( '../models/' )
+        objload.load( 'streetLamp.obj', function ( object ) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject (object);
+          var CenterBB= new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+          for ( var i = 0, l = object.children.length; i < l; i ++ ) 
+          {
+            object.children[i].material.color= new THREE.Color(1,1,1);
+          }
+
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
+
+          //SPAWNING IN
+          for (var i = 0; i < lampNumber; i++) {
+            var clone = object.clone();
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+            var posz = THREE.MathUtils.randInt(-worldSize/2,worldSize/2);
+            var rayPos = new THREE.Vector3(posx,1000,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+            var pos = intersect[0].point;
+            //CHECKING IS POSITION IS TAKEN
+            var isIn = false;
+            for (var i = 0; i < positions.length; i++) {
+              if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                isIn = true;
+              }
+            }
+            //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+              positions.push(pos)
+              clone.scale.set(1,1,1);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              //trees.push(object);
+              scene.add(clone);
+            }
+            // IF PLACE IS NOT AT RIGHT HEIGHT, TRYING AGAIN
+            else {
+              i = i - 1;
+            } 
+          }
+        });
+      } );
+    }
+
+    // LOAD TREES
+    var treeMaterial1;
+    var treeMaterial2;
+    var treeMaterial3;
+    var treeMaterial1Default;
+    var treeMaterial2Default;
+    var treeMaterial3Default;
+    function SpawnTrees() {
+      var treeModel;
+      var mtlload = new MTLLoader();
+      mtlload.setPath('../models/')
+      mtlload.load('Oak_Tree.mtl', function(materials) 
+      {
+        materials.preload();
+        var objload = new OBJLoader();
+        objload.setMaterials(materials)
+        objload.setPath('../models/')
+        objload.load('Oak_Tree.obj', function(object) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject(object);
+          var CenterBB = new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+
+          // Sets materials
+          treeMaterial1 = materials.materials.Green;
+          treeMaterial2 = materials.materials.Green_2;
+          treeMaterial3 = materials.materials.Trunk;
+
+          treeMaterial1Default = treeMaterial1;
+          treeMaterial2Default = treeMaterial2;
+          treeMaterial3Default = treeMaterial3;
+
+          for(var i = 0, l = object.children.length; i < l; i ++) 
+          {
+            object.children[i].material.color = new THREE.Color(1,1,1);
+          }
+
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
+
+          // SPAWNING IN
+          for (var i = 0; i < treeNumber; i++) {
+            var clone = object.clone();
+            var rot = THREE.MathUtils.randFloat(-1,1);
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var rayPos = new THREE.Vector3(posx,1000,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+
+            // CHECKING IF PLACE IS TAKEN
+            var pos = intersect[0].point;
+            var isIn = false;
+            for (var i = 0; i < positions.length; i++) {
+              if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                isIn = true;
+              }
+            }
+
+            // CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+              
+              treePositions.push(pos);
+              positions.push(pos);
+              clone.scale.set(2,2,2);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              clone.rotateY(rot);
+              clone.name = "tree";
+              
+              scene.add(clone);
+              trees.push(clone);
+            }
+            // OTHERWISE TRYING AGAIN
+            else {
+              i = i - 1;
+            } 
+          }
+        });
+      });
+    }
+
+    // LOAD PINE TREES
+    var pineMaterial;
+    var pineMaterialDefault;
+    function SpawnPines() {
+      var mtlload = new MTLLoader();
+      mtlload.setPath('../models/')
+      mtlload.load('Fir_Tree.mtl', function(materials) 
+      {
+        materials.preload();
+        var objload = new OBJLoader();
+        objload.setMaterials(materials)
+        objload.setPath('../models/')
+        objload.load('Fir_Tree.obj', function(object) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject(object);
+          var CenterBB = new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+
+          // Sets materials
+
+          for(var i = 0, l = object.children.length; i < l; i ++) 
+          {
+            object.children[i].material.color = new THREE.Color(1,1,1);
+          }
+
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
+
+          //SPAWNING IN
+          for (var i = 0; i < pineNumber; i++) {
+            var clone = object.clone();
+            var rot = THREE.MathUtils.randFloat(-1,1);
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var rayPos = new THREE.Vector3(posx,1000,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+
+            //CHECKING IF PLACE IS TAKEN
+            var pos = intersect[0].point;
+            var isIn = false;
+            for (var i = 0; i < pinePositions.length; i++) {
+              if (pinePositions[i].x == pos.x && pinePositions[i].y == pos.y && pinePositions[i].z == pos.z) {
+                isIn = true;
+              }
+            }
+
+            //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+              pinePositions.push(pos);
+              positions.push(pos);
+              clone.scale.set(2,2,2);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              clone.rotateY(rot);
+              trees.push(clone);
+              scene.add(clone);
+            }
+            //OTHERWISE TRYING AGAIN
+            else {
+              i = i - 1;
+            } 
+          }
+        });
+      });
+    }
+
+    // Spawns grass
+    function SpawnGrass() {
+      var mtlload = new MTLLoader();
+      mtlload.setPath('../models/')
+      mtlload.load('grass_low_poly.mtl', function(materials) 
+      {
+        materials.preload();
+        var objload = new OBJLoader();
+        objload.setMaterials(materials)
+        objload.setPath('../models/')
+        objload.load('grass_low_poly.obj', function(object) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject(object);
+          var CenterBB = new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+
+          for(var i = 0, l = object.children.length; i < l; i ++) 
+          {
+            object.children[i].material.color = new THREE.Color(1,1,1);
+          }
+
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
+
+          //SPAWNING IN
+          for (var i = 0; i < grassNumber; i++) {
+            var clone = object.clone();
+            var rot = THREE.MathUtils.randFloat(-1,1);
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var rayPos = new THREE.Vector3(posx,1000,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+
+            //CHECKING IF PLACE IS TAKEN
+            var pos = intersect[0].point;
+            var isIn = false;
+            for (var i = 0; i < positions.length; i++) {
+              if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                isIn = true;
+              }
+            }
+
+            //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+            if (intersect[0].point.y >= waterHeight+0.5 && isIn == false) {
+              
+              positions.push(pos);
+              clone.scale.set(0.1,0.1,0.1);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              clone.rotateY(rot);
+              trees.push(clone);
+              scene.add(clone);
+            }
+            //OTHERWISE TRYING AGAIN
+            else {
+              i = i - 1;
+            } 
+          }
+        });
+      });
+    }
+
+    // Spawns rocks
+    function SpawnRocks() {
+      var mtlload = new MTLLoader();
+      mtlload.setPath('../models/')
+      mtlload.load('Rocks.mtl', function(materials) 
+      {
+        materials.preload();
+        var objload = new OBJLoader();
+        objload.setMaterials(materials)
+        objload.setPath('../models/')
+        objload.load('Rock1.obj', function(object) 
+        {
+          var box3 = new THREE.Box3();
+          box3.setFromObject(object);
+          var CenterBB = new THREE.Vector3();
+          var SizeBB = new THREE.Vector3();
+          box3.getCenter(CenterBB);
+          box3.getSize(SizeBB);
+
+          for(var i = 0, l = object.children.length; i < l; i ++) 
+          {
+            object.children[i].material.color = new THREE.Color(0.8,0.8,0.8);
+          }
+
+          materials.materials.Material.color.setHSL(0, 0, 0.4);
+
+          // Cast and receive shadows
+          object.traverse(function(node) {
+            if(node.isMesh)
+              node.castShadow = true;
+              node.receiveShadow = true;
+          });
+
+          //SPAWNING IN
+          rockNumber = 50;
+          for (var i = 0; i < rockNumber; i++) {
+            var clone = object.clone();
+            var rot = THREE.MathUtils.randFloat(-1,1);
+            var raycaster = new THREE.Raycaster();
+            var posx = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var posz = THREE.MathUtils.randInt((-worldSize/2)+2,(worldSize/2)-2);
+            var rayPos = new THREE.Vector3(posx,1000,posz);
+            var rayDir = new THREE.Vector3(0, -1, 0);
+            var ray = new THREE.Ray(rayPos, rayDir);
+            raycaster.ray = ray;
+            let intersect = raycaster.intersectObject(terrain);
+
+            var pos = intersect[0].point;
+            //CHECKING IF PLACE IS TAKEN
+            /*
+            var isIn = false;
+            for (var i = 0; i < positions.length; i++) {
+              if (positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                isIn = true;
+              }
+            }*/
+
+            //CHECKING IF PLACE IS AT THE RIGHT HEIGHT
+            if (intersect[0].point.y >= waterHeight+0.5 ){//&& isIn == false) {
+              
+              positions.push(pos);
+              clone.scale.set(5,5,5);
+              clone.position.set(intersect[0].point.x,intersect[0].point.y,intersect[0].point.z);
+              //clone.rotateY(rot);
+              trees.push(clone);
+              scene.add(clone);
+            }
+            //OTHERWISE TRYING AGAIN
+            else {
+              i = i - 1;
+            } 
+          }
+        });
+      });
+    }
+
     // Controls
     var controls = new OrbitControls(camera, renderer.domElement);
+    controls.minDistance = 50;
+    controls.maxDistance = 300;
 
     // GUI
     const gui = new GUI(),
@@ -499,14 +1098,6 @@
           bloomPass.strength = Number(v);
         },
 
-        // Bloom threshold
-        get 'Bloom Threshold'() {
-          return bloomPass.threshold;
-        },
-        set 'Bloom Threshold'(v) {
-          bloomPass.threshold = Number(v);
-        },
-
         // Bloom radius
         get 'Bloom Radius'() {
           return bloomPass.radius;
@@ -542,6 +1133,53 @@
         set 'Phase Speed'(v) {
           moonSpeed = v;
         }
+      },
+
+      folderClouds = gui.addFolder('Clouds'),
+      cloudParams = {
+        // Number of clouds
+        get 'Number of Clouds'() {
+          return cloudAmount;
+        },
+        set 'Number of Clouds'(v) {
+          cloudAmount = v;
+        },
+        
+        // Cloud density
+        get 'Density'() {
+          return cloudDensity;
+        },
+        set 'Density'(v) {
+          cloudDensity = v;
+        },
+
+        // Cloud size
+        get 'Size'() {
+          return cloudSize;
+        },
+        set 'Size'(v) {
+          cloudSize = v;
+        },
+
+        // Cloud opacity
+        get 'Opacity'() {
+          return cloudOpacity;
+        },
+        set 'Opacity'(v) {
+          cloudOpacity = v;
+          cloudMaterial.opacity = cloudOpacity;
+        }
+      },
+
+      folderStars = gui.addFolder('Stars'),
+      starParams = {
+        // Number of stars
+        get 'Number of Stars'() {
+          return starAmount;
+        },
+        set 'Number of Stars'(v) {
+          starAmount = v;
+        }
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -550,12 +1188,18 @@
 
     folderBloom.add(bloomParams, 'Exposure', 0, 16);
     folderBloom.add(bloomParams, 'Bloom Strength', 0, 20);
-    folderBloom.add(bloomParams, 'Bloom Threshold', 0, 1);
     folderBloom.add(bloomParams, 'Bloom Radius', 0, 1);
 
     folderMoon.add(moonParams, 'Pause Rotation').listen().onChange();
     folderMoon.add(moonParams, 'Moon Phase', 0, 360).listen().onChange();
     folderMoon.add(moonParams, 'Phase Speed', 0.1, 10);
+
+    folderClouds.add(cloudParams, 'Number of Clouds', 0, 50).step(1);
+    folderClouds.add(cloudParams, 'Density', 0, 50).step(1);
+    folderClouds.add(cloudParams, 'Size', 5, 15).step(1);
+    folderClouds.add(cloudParams, 'Opacity', 0, 1);
+
+    folderStars.add(starParams, 'Number of Stars', 0, 500).step(1);
 
     // Update loop
     var MyUpdateLoop = function () {
@@ -565,18 +1209,40 @@
       ProcessTime();
       MoonPhases();
       SunMoonRotation();
+
+      // Animates clouds
+      ProcessClouds();
+
+      // Animates stars
+      AnimateStars();
+      ProcessStars();
+
+      // Updates color of sky
+      ChangeSkyColor();
       
-      // Processes bloom
-      plane.material = darkMaterial;
-      cube.material = darkMaterial; // testing
+      // Objects unaffected by bloom
+      terrain.material = darkMaterial;
+
+      treeMaterial1 = darkMaterial;
+      treeMaterial2 = darkMaterial;
+      treeMaterial3 = darkMaterial;
+
+      water = waterDark;
+
       bloomComposer.render();
-      plane.material = planeMaterial;
+
+      // Processes bloom for all objects
+      terrain.material = terrainMaterial;
       sun.material = sunMaterial;
       moon.material = moonMaterial;
-      cube.material = planeMaterial; // testing
-      finalComposer.render();
 
-      UpdateSkyColor();
+      treeMaterial1 = treeMaterial1Default;
+      treeMaterial2 = treeMaterial2Default;
+      treeMaterial3 = treeMaterial3Default;
+
+      water = waterDefault;
+      
+      finalComposer.render();
 
       requestAnimationFrame(MyUpdateLoop);
     };
