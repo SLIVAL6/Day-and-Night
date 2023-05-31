@@ -203,7 +203,7 @@
     // Clears the scene when parameters are updated
     function ClearScene() {
       for (let i = scene.children.length - 1; i >= 0; i--) {
-        if (scene.children[i].type == "Mesh") {
+        if (scene.children[i].type != "Camera") {
           scene.remove(scene.children[i]);
         }
       }
@@ -1168,6 +1168,17 @@
         set 'Number of Stars'(v) {
           starAmount = v;
         }
+      },
+
+      folderWorld = gui.addFolder('World Generation'),
+      worldParams = {
+        // Number of stars
+        get 'World Size'() {
+          return worldSize;
+        },
+        set 'World Size'(v) {
+          worldSize = v;
+        }
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -1189,7 +1200,10 @@
 
     folderStars.add(starParams, 'Number of Stars', 0, 500).step(1);
 
+    folderWorld.add(worldParams, 'World Size', 100, 300).step(1).listen().onChange();
+
     // Update loop
+    var defSize = worldSize;
     var MyUpdateLoop = function () {
       controls.update();
 
@@ -1232,6 +1246,12 @@
       
       finalComposer.render();
 
+      if (worldSize != defSize) {
+        defSize = worldSize;
+        ClearScene();
+        CreateScene();
+      }
+
       requestAnimationFrame(MyUpdateLoop);
     };
 
@@ -1243,7 +1263,9 @@
     window.addEventListener('keydown', handleKeyDown, false);
 
     // Called when the window is resized
+    
     var MyResize = function () {
+      
       var width = window.innerWidth;
       var height = window.innerHeight;
       renderer.setSize(width, height);
