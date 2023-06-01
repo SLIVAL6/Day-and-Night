@@ -100,7 +100,7 @@
 
     // Camera setup
     var camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-    camera.position.set(100, 80, 100);
+    camera.position.set(150, 100, 150);
     camera.lookAt(0, 20, 0);
 
     THREE.ColorManagement.legacyMode = false
@@ -163,7 +163,7 @@
     ambientLight.intensity = 1;
 
     // Sun and moon position
-    var sunMoonPos = 55;
+    var sunMoonPos = 70;
 
     // Light from the sun
     const sunLight = new THREE.PointLight( { color: 'white' } );
@@ -254,6 +254,20 @@
     var cloudDensity = 20;
     var cloudSize = 5;
 
+    // Glass
+    var glassColored = new THREE.Group();
+    var glassRedMaterial;
+    var glassYellowMaterial;
+    var glassGreenMaterial;
+    var glassBlueMaterial;
+    var glassGreyMaterial;
+    var glassClearMaterial;
+    var glassRed;
+    var glassYellow;
+    var glassGreen;
+    var glassBlue;
+    var glassGrey;
+
     // Creates Scene
     var point;
     function CreateScene() {
@@ -284,11 +298,14 @@
       CreateTerrain();
       BuildWater();
       CreateBox();
+      CreateGlassColored();
       SpawnLamps();
       SpawnTrees();
       SpawnPines();
       SpawnRocks();
       SpawnGrass();
+
+      ChangeGlassColor(false);
 
       // Adds lighting
       scene.add(ambientLight);
@@ -656,10 +673,124 @@
       var boxGeometry = new THREE.BoxGeometry(worldSize, worldSize * 0.1, worldSize);
       var boxMaterial = new THREE.MeshLambertMaterial({color: 0x000000});
       var box = new THREE.Mesh(boxGeometry, boxMaterial);
-      box.position.y = waterHeight - (worldSize * 0.1 * 0.5) - 0.1;
       box.position.x = 0;
+      box.position.y = waterHeight - (worldSize * 0.1 * 0.5) - 0.1;
       box.position.z = 0;
       scene.add(box);
+    }
+
+    // Adds coloured glass planes encapsulating the environment
+    function CreateGlassColored() {
+      var glassGeometry = new THREE.PlaneGeometry(worldSize, worldSize * 0.5);
+      var glassTopGeometry = new THREE.PlaneGeometry(worldSize, worldSize);
+
+      glassRedMaterial = new THREE.MeshBasicMaterial({
+        color: 'red',
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassYellowMaterial = new THREE.MeshBasicMaterial({
+        color: 'yellow',
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassGreenMaterial = new THREE.MeshBasicMaterial({
+        color: 'green',
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassBlueMaterial = new THREE.MeshBasicMaterial({
+        color: 'blue',
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassGreyMaterial = new THREE.MeshBasicMaterial({
+        color: 0xbfbfbf,
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassClearMaterial = new THREE.MeshLambertMaterial({
+        color: 0xffffff,
+        opacity: 0.2,
+        transparent: true,
+        depthWrite: false
+      });
+
+      glassRed = new THREE.Mesh(glassGeometry, glassRedMaterial);
+      glassRed.position.x = worldSize / 2;
+      glassRed.position.y = waterHeight + (worldSize * 0.5 * 0.5) + 0.1;
+      glassRed.position.z = 0;
+      glassRed.rotation.x = 0;
+      glassRed.rotation.y = Math.PI / 2;
+      glassRed.rotation.z = 0;
+
+      glassYellow = new THREE.Mesh(glassGeometry, glassYellowMaterial);
+      glassYellow.position.x = 0;
+      glassYellow.position.y = waterHeight + (worldSize * 0.5 * 0.5) + 0.1;
+      glassYellow.position.z = -worldSize / 2;
+      glassYellow.rotation.x = 0;
+      glassYellow.rotation.y = Math.PI / 1;
+      glassYellow.rotation.z = 0;
+
+      glassGreen = new THREE.Mesh(glassGeometry, glassGreenMaterial);
+      glassGreen.position.x = -worldSize / 2;
+      glassGreen.position.y = waterHeight + (worldSize * 0.5 * 0.5) + 0.1;
+      glassGreen.position.z = 0;
+      glassGreen.rotation.x = 0;
+      glassGreen.rotation.y = -Math.PI / 2;
+      glassGreen.rotation.z = 0;
+
+      glassBlue = new THREE.Mesh(glassGeometry, glassBlueMaterial);
+      glassBlue.position.x = 0;
+      glassBlue.position.y = waterHeight + (worldSize * 0.5 * 0.5) + 0.1;
+      glassBlue.position.z = worldSize / 2;
+      glassBlue.rotation.x = 0;
+      glassBlue.rotation.y = 0;
+      glassBlue.rotation.z = 0;
+
+      glassGrey = new THREE.Mesh(glassTopGeometry, glassGreyMaterial);
+      glassGrey.position.x = 0;
+      glassGrey.position.y = waterHeight + (worldSize * 0.5) + 0.1;
+      glassGrey.position.z = 0;
+      glassGrey.rotation.x = -Math.PI / 2;
+      glassGrey.rotation.y = 0;
+      glassGrey.rotation.z = 0;
+
+      glassColored.add(glassRed);
+      glassColored.add(glassYellow);
+      glassColored.add(glassGreen);
+      glassColored.add(glassBlue);
+      glassColored.add(glassGrey);
+
+      scene.add(glassColored);
+    }
+
+    // Changes color of glass between colored and clear
+    function ChangeGlassColor(colored) {
+      if (colored) {
+        glassRed.material = glassRedMaterial;
+        glassYellow.material = glassYellowMaterial;
+        glassGreen.material = glassGreenMaterial;
+        glassBlue.material = glassBlueMaterial;
+        glassGrey.material = glassGreyMaterial;
+      }
+      else {
+        glassRed.material = glassClearMaterial;
+        glassYellow.material = glassClearMaterial;
+        glassGreen.material = glassClearMaterial;
+        glassBlue.material = glassClearMaterial;
+        glassGrey.material = glassClearMaterial;
+      }
     }
 
     // LOAD LAMPS
