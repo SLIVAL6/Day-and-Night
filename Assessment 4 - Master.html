@@ -283,6 +283,7 @@
       // Adds environment
       CreateTerrain();
       BuildWater();
+      CreateBox();
       SpawnLamps();
       SpawnTrees();
       SpawnPines();
@@ -328,7 +329,7 @@
     // Randomises position of cloud points
     function RandomCloudPosition(obj) {
       obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
-      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 45;
+      obj.position.y = RandomNumber(-worldSize * 0.1, worldSize * 0.1) + 25;
       obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
     }
 
@@ -401,9 +402,9 @@
 
     // Random Star Location Generator
     function RandomStarPosition(obj) {
-      obj.position.x = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
-      obj.position.y = RandomNumber(-worldSize * 0.4, worldSize * 0.1) + 75;
-      obj.position.z = RandomNumber(-worldSize * 0.5, worldSize * 0.5);
+      obj.position.x = RandomNumber(-worldSize, worldSize);
+      obj.position.y = RandomNumber(-worldSize * 0.4, worldSize * 0.4) + 75;
+      obj.position.z = RandomNumber(-worldSize, worldSize);
     }
 
     // Process spawning/despawning stars
@@ -648,6 +649,17 @@
       scene.add(water);
       
       const waterUniforms = water.material.uniforms;
+    }
+
+    // Creates a box to cover the underside of the water
+    function CreateBox() {
+      var boxGeometry = new THREE.BoxGeometry(worldSize, worldSize * 0.1, worldSize);
+      var boxMaterial = new THREE.MeshLambertMaterial({color: 0x000000});
+      var box = new THREE.Mesh(boxGeometry, boxMaterial);
+      box.position.y = waterHeight - (worldSize * 0.1 * 0.5) - 0.1;
+      box.position.x = 0;
+      box.position.z = 0;
+      scene.add(box);
     }
 
     // LOAD LAMPS
