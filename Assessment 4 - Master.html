@@ -379,24 +379,122 @@
     }
 
     // Create sky
+    var skyMap;
     function CreateSky() {
-      skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide, color: skyDayColor});
+
+      skyMaterial = new THREE.MeshBasicMaterial();
       skyMaterial.toneMapped = false;
-      sky = new THREE.Mesh(new THREE.SphereGeometry(500), skyMaterial);
+      skyMap = new THREE.TextureLoader().load('./textures/sky6.png');
+      skyMaterial.side = THREE.DoubleSide;
+      skyMap.wrapS = skyMap.wrapT = THREE.RepeatWrapping;
+      skyMap.repeat = new THREE.Vector2(1, 1);
+      skyMaterial.map = skyMap;
+      sky = new THREE.Mesh(new THREE.SphereGeometry(500,500), skyMaterial);
 			scene.add(sky);
     }
 
+    var sky1 = new THREE.TextureLoader().load('./textures/sky1.png');
+    var sky2 = new THREE.TextureLoader().load('./textures/sky2.png');
+    var sky3 = new THREE.TextureLoader().load('./textures/sky3.png');
+    var sky4 = new THREE.TextureLoader().load('./textures/sky4.png');
+    var sky5 = new THREE.TextureLoader().load('./textures/sky5.png');
+    var sky6 = new THREE.TextureLoader().load('./textures/sky6.png');
+    var sky7 = new THREE.TextureLoader().load('./textures/sky7.png');
+    var sky8 = new THREE.TextureLoader().load('./textures/sky8.png');
+    var sky9 = new THREE.TextureLoader().load('./textures/sky9.png');
+    var sky10 = new THREE.TextureLoader().load('./textures/sky10.png');
+    var sky11 = new THREE.TextureLoader().load('./textures/sky11.png');
+    var sky12 = new THREE.TextureLoader().load('./textures/sky12.png');
+    var sky13 = new THREE.TextureLoader().load('./textures/sky13.png');
+    var sky14 = new THREE.TextureLoader().load('./textures/sky14.png');
+    var sky15 = new THREE.TextureLoader().load('./textures/sky15.png');
+    var sky16 = new THREE.TextureLoader().load('./textures/sky16.png');
+    var sky17 = new THREE.TextureLoader().load('./textures/sky17.png');
+    var sky18 = new THREE.TextureLoader().load('./textures/sky18.png');
+    var sky19 = new THREE.TextureLoader().load('./textures/sky19.png');
+    var sky20 = new THREE.TextureLoader().load('./textures/sky20.png');
+    var sky21 = new THREE.TextureLoader().load('./textures/sky21.png');
+    var sky22 = new THREE.TextureLoader().load('./textures/sky22.png');
+    var sky23 = new THREE.TextureLoader().load('./textures/sky23.png');
+
     // Updates sky color
     function ChangeSkyColor() {
-      // Night
-      if (time >= 720 && skyChanged) {
-        skyMaterial.color = skyNightColor;
-        skyChanged = false;
+      // Sunrise
+      if (time >= 0 && time < 12) {
+        sky22.wrapS = sky22.wrapT = THREE.RepeatWrapping;
+        sky22.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky22;
       }
+      if (time >= 12 && time < 24) {
+        sky21.wrapS = sky21.wrapT = THREE.RepeatWrapping;
+        sky21.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky21;
+      }
+      if (time >= 24 && time < 36) {
+        sky20.wrapS = sky20.wrapT = THREE.RepeatWrapping;
+        sky20.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky20;
+      }
+      if (time >= 36 && time < 48) {
+        sky19.wrapS = sky19.wrapT = THREE.RepeatWrapping;
+        sky19.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky19;
+      }
+      if (time >= 48 && time < 60) {
+        sky18.wrapS = sky18.wrapT = THREE.RepeatWrapping;
+        sky18.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky18;
+      }
+      if (time >= 60 && time < 72) {
+        sky17.wrapS = sky17.wrapT = THREE.RepeatWrapping;
+        sky17.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky17;
+      }
+      if (time >= 72 && time < 84) {
+        sky16.wrapS = sky14.wrapT = THREE.RepeatWrapping;
+        sky16.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky16;
+      }
+      
       // Day
-      else if (time < 720 && !skyChanged) {
-        skyMaterial.color = skyDayColor;
-        skyChanged = true;
+      if (time >= 84 && time < 450) {
+        sky15.wrapS = sky15.wrapT = THREE.RepeatWrapping;
+        sky15.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky15;
+      }
+
+      // Sunset
+      if (time >= 495 && time < 540) {
+        sky5.wrapS = sky5.wrapT = THREE.RepeatWrapping;
+        sky5.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky5;
+      }
+      if (time >= 540 && time < 585) {
+        sky4.wrapS = sky4.wrapT = THREE.RepeatWrapping;
+        sky4.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky4;
+      }
+      if (time >= 585 && time < 630) {
+        sky3.wrapS = sky3.wrapT = THREE.RepeatWrapping;
+        sky3.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky3;
+      }
+      if (time >= 630 && time < 675) {
+        sky2.wrapS = sky2.wrapT = THREE.RepeatWrapping;
+        sky2.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky2;
+      }
+      if (time >= 675 && time < 720) {
+        sky1.wrapS = sky1.wrapT = THREE.RepeatWrapping;
+        sky1.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky1;
+      }
+
+      // Night 
+      if (time >= 720 && time < 0) {
+        sky23.wrapS = sky23.wrapT = THREE.RepeatWrapping;
+        sky23.repeat = new THREE.Vector2(1, 1);
+        sky.material.map = sky23;
       }
     }
 
