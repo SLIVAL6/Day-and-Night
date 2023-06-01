@@ -255,7 +255,9 @@
     var cloudSize = 5;
 
     // Glass
-    var glassColored = new THREE.Group();
+    var useColoredGlass = true;
+    var showGlass = true;
+    var glass = new THREE.Group();
     var glassRedMaterial;
     var glassYellowMaterial;
     var glassGreenMaterial;
@@ -304,8 +306,6 @@
       SpawnPines();
       SpawnRocks();
       SpawnGrass();
-
-      ChangeGlassColor(false);
 
       // Adds lighting
       scene.add(ambientLight);
@@ -766,17 +766,17 @@
       glassGrey.rotation.y = 0;
       glassGrey.rotation.z = 0;
 
-      glassColored.add(glassRed);
-      glassColored.add(glassYellow);
-      glassColored.add(glassGreen);
-      glassColored.add(glassBlue);
-      glassColored.add(glassGrey);
+      glass.add(glassRed);
+      glass.add(glassYellow);
+      glass.add(glassGreen);
+      glass.add(glassBlue);
+      glass.add(glassGrey);
 
-      scene.add(glassColored);
+      scene.add(glass);
     }
 
     // Changes color of glass between colored and clear
-    function ChangeGlassColor(colored) {
+    function UseColoredGlass(colored) {
       if (colored) {
         glassRed.material = glassRedMaterial;
         glassYellow.material = glassYellowMaterial;
@@ -790,6 +790,16 @@
         glassGreen.material = glassClearMaterial;
         glassBlue.material = glassClearMaterial;
         glassGrey.material = glassClearMaterial;
+      }
+    }
+
+    // Removes and adds glass from the scene
+    function ProcessGlass(show) {
+      if (show) {
+        scene.add(glass);
+      }
+      else {
+        scene.remove(glass);
       }
     }
 
@@ -1311,6 +1321,27 @@
         set 'Number of Stars'(v) {
           starAmount = v;
         }
+      },
+
+      folderGlass = gui.addFolder('Glass'),
+      glassParams = {
+        // Change glass between colored and clear
+        get 'Colored Glass'() {
+          return useColoredGlass;
+        },
+        set 'Colored Glass'(v) {
+          useColoredGlass = v;
+          UseColoredGlass(useColoredGlass);
+        },
+
+        // Change glass between colored and clear
+        get 'Show Glass'() {
+          return showGlass;
+        },
+        set 'Show Glass'(v) {
+          showGlass = v;
+          ProcessGlass(showGlass);
+        }
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -1331,6 +1362,9 @@
     folderClouds.add(cloudParams, 'Opacity', 0, 1);
 
     folderStars.add(starParams, 'Number of Stars', 0, 500).step(1);
+
+    folderGlass.add(glassParams, 'Colored Glass');
+    folderGlass.add(glassParams, 'Show Glass');
 
     // Update loop
     var MyUpdateLoop = function () {
