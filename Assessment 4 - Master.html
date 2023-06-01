@@ -1286,6 +1286,9 @@
     var controls = new OrbitControls(camera, renderer.domElement);
     controls.minDistance = 50;
     controls.maxDistance = 300;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
 
     // GUI
     const gui = new GUI(),
@@ -1440,6 +1443,17 @@
           showGlass = v;
           ProcessGlass(showGlass);
         }
+      },
+
+      folderCamera = gui.addFolder('Camera'),
+      cameraParams = {
+        // Change glass between colored and clear
+        get 'Auto-Rotate'() {
+          return controls.autoRotate;
+        },
+        set 'Auto-Rotate'(v) {
+          controls.autoRotate = v;
+        },
       };
       
     folderTime.add(timeParams, 'Paused');
@@ -1463,6 +1477,8 @@
 
     folderGlass.add(glassParams, 'Colored Glass');
     folderGlass.add(glassParams, 'Show Glass');
+
+    folderCamera.add(cameraParams, 'Auto-Rotate');
 
     // Update loop
     var MyUpdateLoop = function () {
